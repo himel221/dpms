@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dyeing Machine Details — Yarn & Dyeing System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/machines.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="machines-page">
+
+  <!-- ==========================================
+       Page Header
+       ========================================== -->
+  <div class="machines-header">
+    <div class="machines-header-content">
+      <h1 class="machines-title">Dyeing Machine Details</h1>
+      <p class="machines-subtitle">
+        Complete information about all dyeing machines
+      </p>
+    </div>
+
+    <button class="btn btn-primary" id="openAddMachineModal">
+      <i data-lucide="plus"></i>
+      Add Machine
+    </button>
+  </div>
+
+  <!-- ==========================================
+       Machine Table Card
+       ========================================== -->
+  <div class="machines-card">
+
+    <div class="machines-card-header">
+      <h2 class="machines-card-title">
+        Dyeing Machine of {{ company|default:"EAL" }}
+      </h2>
+    </div>
+
+    <div class="machines-table-wrap">
+      <table class="machines-table">
+        <thead>
+          <tr class="machines-thead-row-1">
+            <th rowspan="2" class="th-capacity">Machine Capacity</th>
+            <th rowspan="2" class="th-cone">Cone</th>
+            <th colspan="2" class="th-knit-sweater">Knit Sweater Yarn</th>
+            <th colspan="2" class="th-knit-yarn">Knit Yarn</th>
+            <th rowspan="2" class="th-actions text-center">Actions</th>
+          </tr>
+          <tr class="machines-thead-row-2">
+            <th class="th-min">Min-Kg</th>
+            <th class="th-max">Max-Kg</th>
+            <th class="th-min">Min-Kg</th>
+            <th class="th-max">Max-Kg</th>
+          </tr>
+        </thead>
+        <tbody id="machinesTableBody">
+          {% for machine in machines %}
+          <tr class="machines-row"
+              data-id="{{ machine.id }}"
+              data-company="{{ machine.company }}"
+              data-capacity="{{ machine.machine_capacity }}"
+              data-cone="{{ machine.cone }}"
+              data-sweater-min="{{ machine.knit_sweater_min }}"
+              data-sweater-max="{{ machine.knit_sweater_max }}"
+              data-yarn-min="{{ machine.knit_yarn_min }}"
+              data-yarn-max="{{ machine.knit_yarn_max }}"
+              data-display-order="{{ machine.display_order }}"
+          >
+            <td class="td-capacity">{{ machine.machine_capacity }}</td>
+            <td class="td-cone">{{ machine.cone|floatformat:"-2" }}</td>
+            <td class="td-num">{{ machine.knit_sweater_min|floatformat:"-2" }}</td>
+            <td class="td-num">{{ machine.knit_sweater_max|floatformat:"-2" }}</td>
+            <td class="td-num">{{ machine.knit_yarn_min|floatformat:"-2" }}</td>
+            <td class="td-num">{{ machine.knit_yarn_max|floatformat:"-2" }}</td>
+            <td class="td-actions text-center">
+              <div class="row-actions">
+                <button class="btn-row-edit" data-action="edit" data-id="{{ machine.id }}" title="Edit">
+                  <i data-lucide="pencil"></i>
+                </button>
+                <button class="btn-row-delete" data-action="delete" data-id="{{ machine.id }}" title="Delete">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr id="emptyRow">
+            <td colspan="7" class="machines-empty">
+              <div class="empty-state">
+                <i data-lucide="cpu" class="empty-icon"></i>
+                <p class="empty-title">No machines added yet</p>
+                <p class="empty-sub">Click "Add Machine" to add your first machine</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ==========================================
+     Add Machine Modal
+     ========================================== -->
+<div class="modal-backdrop" id="addMachineModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <i data-lucide="cpu"></i>
+        </div>
+        <div>
+          <h3>Add New Machine</h3>
+          <p class="modal-subtitle">Fill in the machine details below</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="addMachineModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="addMachineForm" class="form-grid">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>Company *</label>
+          <select name="company" class="form-input" required>
+            <option value="EAL" selected>EAL</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Machine Capacity *</label>
+          <input type="text" name="machineCapacity" class="form-input" placeholder="e.g., 3000X1" required />
+        </div>
+
+        <div class="form-group">
+          <label>Cone (kg) *</label>
+          <input type="number" step="any" name="cone" class="form-input" placeholder="e.g., 2871" required />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Sweater Min (kg)</label>
+          <input type="number" step="any" name="knitSweaterMin" class="form-input" placeholder="e.g., 2590" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Sweater Max (kg)</label>
+          <input type="number" step="any" name="knitSweaterMax" class="form-input" placeholder="e.g., 2727" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Yarn Min (kg)</label>
+          <input type="number" step="any" name="knitYarnMin" class="form-input" placeholder="e.g., 2618" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Yarn Max (kg)</label>
+          <input type="number" step="any" name="knitYarnMax" class="form-input" placeholder="e.g., 2756" />
+        </div>
+
+        <div class="form-group">
+          <label>Display Order</label>
+          <input type="number" name="displayOrder" class="form-input" placeholder="0" value="0" />
+          <p class="form-hint">Choto number age dekhacche</p>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="addMachineModal">Cancel</button>
+      <button class="btn btn-primary" id="submitAddMachine">
+        <i data-lucide="save"></i>
+        Save Machine
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     Edit Machine Modal
+     ========================================== -->
+<div class="modal-backdrop" id="editMachineModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon modal-header-icon-edit">
+          <i data-lucide="pencil"></i>
+        </div>
+        <div>
+          <h3>Edit Machine <span id="editMachineIdLabel" class="machine-id-inline"></span></h3>
+          <p class="modal-subtitle">Update the machine details below</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="editMachineModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="editMachineForm" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="machineId" id="edit_machine_id" />
+
+        <div class="form-group">
+          <label>Company *</label>
+          <select name="company" class="form-input" required>
+            <option value="EAL">EAL</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Machine Capacity *</label>
+          <input type="text" name="machineCapacity" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label>Cone (kg) *</label>
+          <input type="number" step="any" name="cone" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Sweater Min (kg)</label>
+          <input type="number" step="any" name="knitSweaterMin" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Sweater Max (kg)</label>
+          <input type="number" step="any" name="knitSweaterMax" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Yarn Min (kg)</label>
+          <input type="number" step="any" name="knitYarnMin" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label>Knit Yarn Max (kg)</label>
+          <input type="number" step="any" name="knitYarnMax" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label>Display Order</label>
+          <input type="number" name="displayOrder" class="form-input" />
+          <p class="form-hint">Choto number age dekhacche</p>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="editMachineModal">Cancel</button>
+      <button class="btn btn-primary" id="submitEditMachine">
+        <i data-lucide="save"></i>
+        Update Machine
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     Delete Confirmation Modal
+     ========================================== -->
+<div class="modal-backdrop" id="deleteMachineModal" hidden>
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon modal-header-icon-danger">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <div>
+          <h3>Delete Machine</h3>
+          <p class="modal-subtitle">This action cannot be undone</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="deleteMachineModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="delete-confirm">
+        <p class="delete-confirm-text">
+          Are you sure you want to delete machine
+          <strong id="deleteMachineIdLabel"></strong>?
+        </p>
+        <p class="delete-confirm-sub">
+          This will permanently remove the machine from the list.
+        </p>
+      </div>
+      <input type="hidden" id="delete_machine_id" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="deleteMachineModal">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteMachine">
+        <i data-lucide="trash-2"></i>
+        Delete Machine
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/machines.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/sidebar.css' %}" />
+
+<aside class="sidebar">
+  <!-- ===== Header ===== -->
+  <div class="sidebar-header">
+    <h1 class="sidebar-title">Yarn &amp; Dyeing System</h1>
+    <p class="sidebar-subtitle">Planning &amp; Scheduling</p>
+  </div>
+
+  <!-- ===== Nav ===== -->
+  <nav class="sidebar-nav">
+    <ul class="sidebar-menu">
+
+      <!-- Dashboard -->
+      <li>
+        <a
+          href="{% url 'dpms_app:dashboard' %}"
+          class="sidebar-item {% if active_view == 'dashboard' %}active{% endif %}"
+          data-view="dashboard"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9"></rect>
+            <rect x="14" y="3" width="7" height="5"></rect>
+            <rect x="14" y="12" width="7" height="9"></rect>
+            <rect x="3" y="16" width="7" height="5"></rect>
+          </svg>
+          <span class="sidebar-label">Dashboard</span>
+        </a>
+      </li>
+
+      <!-- Orders -->
+      <li>
+        <a
+          href="{% url 'dpms_app:orders' %}"
+          class="sidebar-item {% if active_view == 'orders' %}active{% endif %}"
+          data-view="orders"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"></circle>
+            <circle cx="19" cy="21" r="1"></circle>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+          </svg>
+          <span class="sidebar-label">Orders</span>
+        </a>
+      </li>
+
+      <!-- Machines -->
+      <li>
+        <a
+          href="{% url 'dpms_app:machines_page' %}"
+          class="sidebar-item {% if active_view == 'machines' %}active{% endif %}"
+          data-view="machines"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+            <rect x="9" y="9" width="6" height="6"></rect>
+            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path>
+          </svg>
+          <span class="sidebar-label">Machines</span>
+        </a>
+      </li>
+
+      <!-- Auto Planner -->
+      <li>
+        <a
+          href="#"
+          class="sidebar-item {% if active_view == 'plan' %}active{% endif %}"
+          data-view="plan"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span class="sidebar-label">Auto Planner</span>
+        </a>
+      </li>
+
+      <!-- Schedule -->
+      <li>
+        <a
+          href="#"
+          class="sidebar-item {% if active_view == 'schedule' %}active{% endif %}"
+          data-view="schedule"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="sidebar-label">Schedule</span>
+        </a>
+      </li>
+
+      <!-- Batches -->
+      <li>
+        <a
+          href="#"
+          class="sidebar-item {% if active_view == 'batches' %}active{% endif %}"
+          data-view="batches"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path>
+            <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path>
+            <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path>
+          </svg>
+          <span class="sidebar-label">Batches</span>
+        </a>
+      </li>
+
+      <!-- Alerts -->
+      <li>
+        <a
+          href="#"
+          class="sidebar-item {% if active_view == 'alerts' %}active{% endif %}"
+          data-view="alerts"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span class="sidebar-label">Alerts</span>
+          {% if rejection_count > 0 %}
+            <span class="sidebar-badge show" id="alertsBadge">
+              {{ rejection_count }}
+            </span>
+          {% else %}
+            <span class="sidebar-badge" id="alertsBadge">0</span>
+          {% endif %}
+        </a>
+      </li>
+
+    </ul>
+  </nav>
+
+  <!-- ===== Footer ===== -->
+  <div class="sidebar-footer">
+    <p>Version 1.0.0</p>
+    <p>© 2026 Textile ERP</p>
+  </div>
+</aside>
+
+<script src="{% static 'js/sidebar.js' %}"></script>

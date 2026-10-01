@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Management — Yarn & Dyeing System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/orders.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="orders-page">
+
+  <!-- ==========================================
+       Page Header
+       ========================================== -->
+  <div class="orders-header">
+    <div class="orders-header-left">
+      <h1 class="orders-title">Order Management</h1>
+      <p class="orders-subtitle">
+        Track and manage all customer orders across your dyeing operations
+      </p>
+    </div>
+
+    <div class="orders-header-right">
+      <button class="btn btn-outline" id="toggleFiltersBtn">
+        <i data-lucide="filter"></i>
+        <span id="toggleFiltersLabel">Show Filters</span>
+      </button>
+      <button class="btn btn-primary" id="openNewOrderModal">
+        <i data-lucide="plus"></i>
+        New Order
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       Advanced Filters Panel
+       ========================================== -->
+  <div class="panel filters-panel" id="advancedFilters" hidden>
+    <div class="panel-header">
+      <div class="panel-title-wrap">
+        <i data-lucide="sliders-horizontal" class="icon-blue"></i>
+        <h3 class="panel-title">Advanced Filters</h3>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="filterStartDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="filterEndDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Customer</label>
+          <select id="filterCustomer" class="form-input">
+            <option value="">All Customers</option>
+            {% for c in unique_customers %}
+              <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Yarn Count</label>
+          <select id="filterYarnCount" class="form-input">
+            <option value="">All Counts</option>
+            {% for y in unique_yarn_counts %}
+              <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Yarn Code</label>
+          <select id="filterYarnCode" class="form-input">
+            <option value="">All Codes</option>
+            {% for y in unique_yarn_codes %}
+              <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <select id="filterColor" class="form-input">
+            <option value="">All Colors</option>
+            {% for c in unique_colors %}
+              <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Min Qty (kg)</label>
+          <input type="number" id="filterMinQty" class="form-input" placeholder="Min" />
+        </div>
+        <div class="form-group">
+          <label>Max Qty (kg)</label>
+          <input type="number" id="filterMaxQty" class="form-input" placeholder="Max" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       Summary Cards (Professional KPI)
+       ========================================== -->
+  <div class="summary-grid">
+
+    <div class="summary-card summary-card-total" data-filter="all">
+      <div class="summary-icon"><i data-lucide="package"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Total Orders</p>
+        <p class="summary-value">{{ total_orders }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-inactive" data-filter="Inactive">
+      <div class="summary-icon"><i data-lucide="archive"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Inactive</p>
+        <p class="summary-value">{{ inactive_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-pending" data-filter="Pending">
+      <div class="summary-icon"><i data-lucide="clock"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Pending</p>
+        <p class="summary-value">{{ pending_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-progress" data-filter="In Progress">
+      <div class="summary-icon"><i data-lucide="activity"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">In Progress</p>
+        <p class="summary-value">{{ in_progress_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-completed" data-filter="Completed">
+      <div class="summary-icon"><i data-lucide="check-circle-2"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Completed</p>
+        <p class="summary-value">{{ completed_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-delayed" data-filter="Delayed">
+      <div class="summary-icon"><i data-lucide="alert-circle"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Delayed</p>
+        <p class="summary-value">{{ delayed_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-emergency" data-filter="Emergency">
+      <div class="summary-icon"><i data-lucide="alert-triangle"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Emergency</p>
+        <p class="summary-value">{{ emergency_count }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card-planned" data-filter="Planned">
+      <div class="summary-icon"><i data-lucide="calendar-check"></i></div>
+      <div class="summary-content">
+        <p class="summary-title">Planned</p>
+        <p class="summary-value">{{ planned_count }}</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       Charts
+       ========================================== -->
+  <div class="charts-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="pie-chart" class="icon-blue"></i>
+          <h3 class="panel-title">Order Status Distribution</h3>
+        </div>
+        <span class="panel-hint">By quantity (kg)</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-pie">
+          <canvas id="orderPieChart"></canvas>
+        </div>
+        <div class="chart-legend" id="orderPieLegend"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="bar-chart-3" class="icon-indigo"></i>
+          <h3 class="panel-title">Order Status Overview</h3>
+        </div>
+        <span class="panel-hint">Count vs Quantity</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-bar">
+          <canvas id="orderBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       Orders Table — Stat card click e ekhane scroll hobe
+       ========================================== -->
+  <div class="panel" id="ordersTablePanel">
+    <div class="panel-header">
+      <div class="panel-title-wrap">
+        <i data-lucide="list" class="icon-blue"></i>
+        <h3 class="panel-title">
+          <span id="ordersTableTitle">All Orders</span>
+          <span class="panel-count-badge" id="filteredCount">{{ orders|length }}</span>
+        </h3>
+      </div>
+      <div class="panel-actions">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search by ID, customer, yarn..."
+          />
+        </div>
+      </div>
+    </div>
+    <div class="panel-body panel-body-no-pad">
+      <div class="table-wrap">
+        <table class="data-table" id="ordersTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Order Date</th>
+              <th>Yarn Count</th>
+              <th>Yarn Code</th>
+              <th>Color</th>
+              <th class="text-right">Order Qty</th>
+              <th class="text-right">Party Yarn</th>
+              <th class="text-right">Store Yarn</th>
+              <th>Status</th>
+              <th>Current Step</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            {% for order in orders %}
+            <tr
+              data-id="{{ order.order_id }}"
+              data-status="{{ order.status }}"
+              data-customer="{{ order.customer_name }}"
+              data-yarn-count="{{ order.yarn_count }}"
+              data-yarn-code="{{ order.yarn_code }}"
+              data-color="{{ order.color }}"
+              data-qty="{{ order.order_qty }}"
+              data-planned="{{ order.is_planned|yesno:'true,false' }}"
+              data-date="{{ order.order_date|date:'Y-m-d' }}"
+              data-party-yarn="{{ order.party_yarn }}"
+              data-store-yarn="{{ order.store_yarn }}"
+              data-ref-no="{{ order.ref_no_buyers|default:'' }}"
+              data-work-order="{{ order.work_order_remark|default:'' }}"
+              data-comments="{{ order.comments|default:'' }}"
+              data-add-percent="{{ order.add_percent_yn|default:0 }}"
+              data-dyeing-qty="{{ order.dyeing_qty|default:0 }}"
+              data-reject-qty="{{ order.reject_qty|default:0 }}"
+              data-dyed-bal="{{ order.dyed_bal_qty|default:0 }}"
+              data-finish-qty="{{ order.finish_qty|default:0 }}"
+              data-del-qty="{{ order.del_qty|default:0 }}"
+              data-held-up="{{ order.held_up_qty|default:0 }}"
+              data-delivery-return="{{ order.delivery_return|default:0 }}"
+              data-delivery-qty="{{ order.delivery_qty|default:0 }}"
+              class="order-row {% if order.status == 'Emergency' %}row-emergency{% endif %}"
+            >
+              <td><span class="order-id">{{ order.order_id }}</span></td>
+              <td class="cell-customer">{{ order.customer_name }}</td>
+              <td class="text-muted">{{ order.order_date|date:'Y-m-d' }}</td>
+              <td>{{ order.yarn_count }}</td>
+              <td><span class="code-chip">{{ order.yarn_code }}</span></td>
+              <td><span class="color-chip">{{ order.color }}</span></td>
+              <td class="text-right cell-qty"><strong>{{ order.order_qty }}</strong></td>
+              <td class="text-right">{{ order.party_yarn }}</td>
+              <td class="text-right">{{ order.store_yarn }}</td>
+              <td>
+                <span class="status-chip status-{{ order.status|slugify }}">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td>
+                {% if order.current_step %}
+                  <span class="step-chip">{{ order.current_step }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="row-actions">
+                  <button class="btn-row-edit" data-action="edit" data-id="{{ order.order_id }}" title="Edit">
+                    <i data-lucide="pencil"></i>
+                  </button>
+                  <button class="btn-row-delete" data-action="delete" data-id="{{ order.order_id }}" title="Delete">
+                    <i data-lucide="trash-2"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+              <td colspan="12" class="text-center">
+                <div class="empty-state">
+                  <i data-lucide="inbox" class="empty-icon"></i>
+                  <p class="empty-title">No orders yet</p>
+                  <p class="empty-sub">Click "New Order" to create your first order</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==========================================
+     New Order Modal
+     ========================================== -->
+<div class="modal-backdrop" id="newOrderModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <i data-lucide="plus-circle"></i>
+        </div>
+        <div>
+          <h3>Add New Order</h3>
+          <p class="modal-subtitle">Fill in the order details below</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="newOrderModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="newOrderForm" class="form-grid">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>Customer Name *</label>
+          <input type="text" name="customerName" class="form-input" placeholder="e.g., Acme Textiles" required />
+        </div>
+        <div class="form-group">
+          <label>Order Date *</label>
+          <input type="date" name="orderDate" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Ref.No & Buyers</label>
+          <input type="text" name="refNoBuyers" class="form-input" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Work Order & Remark</label>
+          <input type="text" name="workOrderRemark" class="form-input" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Comments</label>
+          <input type="text" name="comments" class="form-input" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Yarn Count *</label>
+          <input type="text" name="yarnCount" class="form-input" placeholder="e.g., 30s" required />
+        </div>
+        <div class="form-group">
+          <label>Yarn Code *</label>
+          <input type="text" name="yarnCode" class="form-input" placeholder="e.g., YC-30-COT" required />
+        </div>
+        <div class="form-group">
+          <label>Color *</label>
+          <input type="text" name="color" class="form-input" placeholder="e.g., Navy Blue" required />
+        </div>
+        <div class="form-group">
+          <label>Order Qty (kg) *</label>
+          <input type="number" name="orderQty" class="form-input" placeholder="e.g., 500" required />
+        </div>
+        <div class="form-group">
+          <label>Party Yarn (kg)</label>
+          <input type="number" name="partyYarn" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Store Yarn (kg)</label>
+          <input type="number" name="storeYarn" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Add % Y/N (kg)</label>
+          <input type="number" name="addPercentYN" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Dyeing Qty (kg)</label>
+          <input type="number" name="dyeingQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Reject Qty (kg)</label>
+          <input type="number" name="rejectQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Dyed Bal Qty (kg)</label>
+          <input type="number" name="dyedBalQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Finish Qty (kg)</label>
+          <input type="number" name="finishQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Del Qty (kg)</label>
+          <input type="number" name="delQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Held Up Qty (kg)</label>
+          <input type="number" name="heldUpQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Delivery Return (kg)</label>
+          <input type="number" name="deliveryReturn" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Delivery Qty (kg)</label>
+          <input type="number" name="deliveryQty" class="form-input" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Status *</label>
+          <select name="status" class="form-input">
+            <option value="Inactive">Inactive</option>
+            <option value="Pending" selected>Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Delayed">Delayed</option>
+            <option value="Emergency">Emergency</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="newOrderModal">Cancel</button>
+      <button class="btn btn-primary" id="submitNewOrder">
+        <i data-lucide="save"></i>
+        Save Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     Edit Order Modal
+     ========================================== -->
+<div class="modal-backdrop" id="editOrderModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon modal-header-icon-edit">
+          <i data-lucide="pencil"></i>
+        </div>
+        <div>
+          <h3>Edit Order <span id="editOrderIdLabel" class="order-id-inline"></span></h3>
+          <p class="modal-subtitle">Update the order details below</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="editOrderModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="editOrderForm" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="orderId" id="edit_order_id" />
+
+        <div class="form-group">
+          <label>Customer Name *</label>
+          <input type="text" name="customerName" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Order Date *</label>
+          <input type="date" name="orderDate" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Ref.No & Buyers</label>
+          <input type="text" name="refNoBuyers" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Work Order & Remark</label>
+          <input type="text" name="workOrderRemark" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Comments</label>
+          <input type="text" name="comments" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Yarn Count *</label>
+          <input type="text" name="yarnCount" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Yarn Code *</label>
+          <input type="text" name="yarnCode" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Color *</label>
+          <input type="text" name="color" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Order Qty (kg) *</label>
+          <input type="number" name="orderQty" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label>Party Yarn (kg)</label>
+          <input type="number" name="partyYarn" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Store Yarn (kg)</label>
+          <input type="number" name="storeYarn" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Add % Y/N (kg)</label>
+          <input type="number" name="addPercentYN" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Dyeing Qty (kg)</label>
+          <input type="number" name="dyeingQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Reject Qty (kg)</label>
+          <input type="number" name="rejectQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Dyed Bal Qty (kg)</label>
+          <input type="number" name="dyedBalQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Finish Qty (kg)</label>
+          <input type="number" name="finishQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Del Qty (kg)</label>
+          <input type="number" name="delQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Held Up Qty (kg)</label>
+          <input type="number" name="heldUpQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Delivery Return (kg)</label>
+          <input type="number" name="deliveryReturn" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Delivery Qty (kg)</label>
+          <input type="number" name="deliveryQty" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Status *</label>
+          <select name="status" class="form-input">
+            <option value="Inactive">Inactive</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Delayed">Delayed</option>
+            <option value="Emergency">Emergency</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="editOrderModal">Cancel</button>
+      <button class="btn btn-primary" id="submitEditOrder">
+        <i data-lucide="save"></i>
+        Update Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     Delete Confirmation Modal
+     ========================================== -->
+<div class="modal-backdrop" id="deleteOrderModal" hidden>
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon modal-header-icon-danger">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <div>
+          <h3>Delete Order</h3>
+          <p class="modal-subtitle">This action cannot be undone</p>
+        </div>
+      </div>
+      <button class="btn-icon" data-close-modal="deleteOrderModal" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="delete-confirm">
+        <p class="delete-confirm-text">
+          Are you sure you want to delete order
+          <strong id="deleteOrderIdLabel"></strong>?
+        </p>
+        <p class="delete-confirm-sub">
+          This will permanently remove the order and all its data.
+        </p>
+      </div>
+      <input type="hidden" id="delete_order_id" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close-modal="deleteOrderModal">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteOrder">
+        <i data-lucide="trash-2"></i>
+        Delete Order
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.INITIAL_FILTER = "{{ initial_filter|default:'' }}";
+</script>
+<script src="{% static 'js/orders.js' %}"></script>
+{% endblock %}

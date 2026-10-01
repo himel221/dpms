@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — Yarn & Dyeing System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ==========================================
+     Page Header
+     ========================================== -->
+<div class="dashboard-page">
+  <header class="page-header">
+    <h1 class="page-title">Dashboard - Order Management System</h1>
+    <p class="page-subtitle">
+      Today's Summary • Total <strong>{{ total_orders }}</strong> Orders •
+      <strong>{{ planned_count }}</strong> Planned •
+      <strong>{{ emergency_count }}</strong> Emergency •
+      <strong>{{ total_qty|floatformat:0 }}</strong> kg Total
+    </p>
+  </header>
+
+  <!-- ==========================================
+       Stats Cards Grid
+       ========================================== -->
+  <section class="stats-grid">
+    <!-- Card 1: Total Orders -->
+    <div class="stat-card" data-filter="all" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Total Orders</p>
+          <p class="stat-value text-blue">{{ total_orders }}</p>
+        </div>
+        <div class="stat-icon bg-blue">
+          <i data-lucide="package"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Pending -->
+    <div class="stat-card" data-filter="Pending" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Pending</p>
+          <p class="stat-value text-yellow">{{ pending_count }}</p>
+        </div>
+        <div class="stat-icon bg-yellow">
+          <i data-lucide="clock"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: In Progress -->
+    <div class="stat-card" data-filter="In Progress" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">In Progress</p>
+          <p class="stat-value text-purple">{{ in_progress_count }}</p>
+        </div>
+        <div class="stat-icon bg-purple">
+          <i data-lucide="activity"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Completed -->
+    <div class="stat-card" data-filter="Completed" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Completed</p>
+          <p class="stat-value text-green">{{ completed_count }}</p>
+        </div>
+        <div class="stat-icon bg-green">
+          <i data-lucide="check-circle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Delayed -->
+    <div class="stat-card" data-filter="Delayed" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Delayed</p>
+          <p class="stat-value text-red">{{ delayed_count }}</p>
+        </div>
+        <div class="stat-icon bg-red">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Emergency -->
+    <div class="stat-card" data-filter="Emergency" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">🚨 Emergency</p>
+          <p class="stat-value text-orange">{{ emergency_count }}</p>
+        </div>
+        <div class="stat-icon bg-orange">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Planned -->
+    <div class="stat-card" data-filter="Planned" data-view="orders">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Planned</p>
+          <p class="stat-value text-indigo">{{ planned_count }}</p>
+        </div>
+        <div class="stat-icon bg-indigo">
+          <i data-lucide="trending-up"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Active Machines (placeholder) -->
+    <div class="stat-card" data-filter="Active" data-view="machines">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Active Machines</p>
+          <p class="stat-value text-teal">_</p>
+        </div>
+        <div class="stat-icon bg-teal">
+          <i data-lucide="cpu"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Total Batches (placeholder) -->
+    <div class="stat-card" data-filter="all" data-view="batches">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Total Batches</p>
+          <p class="stat-value text-cyan">_</p>
+        </div>
+        <div class="stat-icon bg-cyan">
+          <i data-lucide="layers"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Rejected Batches (placeholder) -->
+    <div class="stat-card" data-filter="rejections" data-view="alerts">
+      <div class="stat-body">
+        <div class="stat-info">
+          <p class="stat-title">Rejected Batches</p>
+          <p class="stat-value text-rose">_</p>
+        </div>
+        <div class="stat-icon bg-rose">
+          <i data-lucide="x-circle"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Inline Filter Results (hidden by default)
+       ========================================== -->
+  <section class="inline-results" id="inlineResults" hidden>
+    <div class="panel panel-blue">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="activity" class="icon-blue"></i>
+          <h3 class="panel-title" id="inlineResultsTitle">
+            Filtered Orders
+            <span class="panel-count" id="inlineResultsCount">(0 results)</span>
+          </h3>
+        </div>
+        <button class="btn-icon" id="closeInlineResults" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Order Date</th>
+                <th>Yarn</th>
+                <th>Color</th>
+                <th>Qty (kg)</th>
+                <th>Status</th>
+                <th>Step</th>
+                <th>Batches</th>
+              </tr>
+            </thead>
+            <tbody id="inlineResultsBody">
+              <!-- JS will inject rows here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Charts Row 1 — Two Pie Charts
+       ========================================== -->
+  <section class="charts-grid">
+    <!-- Order Status Distribution -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="activity" class="icon-blue"></i>
+          <h3 class="panel-title">Order Status Distribution</h3>
+          <span class="panel-hint">· by quantity (kg)</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-pie">
+          <canvas id="orderStatusChart"></canvas>
+        </div>
+        <div class="chart-legend" id="orderStatusLegend">
+          <!-- JS will inject legend -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Status Distribution (placeholder) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="layers" class="icon-cyan"></i>
+          <h3 class="panel-title">Batch Status Distribution</h3>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-pie">
+          <canvas id="batchStatusChart"></canvas>
+        </div>
+        <div class="chart-legend" id="batchStatusLegend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Machine Capacity Bar Chart (placeholder)
+       ========================================== -->
+  <section>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="cpu" class="icon-indigo"></i>
+          <h3 class="panel-title">Machine Capacity Overview</h3>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-bar">
+          <canvas id="machineCapacityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Weekly Production Trend (placeholder)
+       ========================================== -->
+  <section>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="trending-up" class="icon-green"></i>
+          <h3 class="panel-title">Weekly Production Trend</h3>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container chart-line">
+          <canvas id="weeklyTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Today's Batches (placeholder)
+       ========================================== -->
+  <section>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="list-ordered" class="icon-blue"></i>
+          <h3 class="panel-title">
+            Today's Batches (<span id="todayBatchesCount">0</span> Active)
+          </h3>
+          <span class="panel-hint">· drag to reorder · click to open tracker</span>
+        </div>
+        <button class="btn btn-primary" data-action="view-all-batches">
+          View All (<span id="totalBatchesCount">0</span> Total)
+          <i data-lucide="arrow-right" class="btn-icon-right"></i>
+        </button>
+      </div>
+      <div class="panel-body">
+        <div class="batches-grid" id="todayBatchesGrid">
+          <!-- JS will inject batch cards here -->
+        </div>
+        <div class="empty-state" id="todayBatchesEmpty" hidden>
+          <i data-lucide="list-ordered" class="empty-icon"></i>
+          <p>No batches scheduled for today</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Completed Batches (placeholder)
+       ========================================== -->
+  <section>
+    <div class="panel panel-green">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="award" class="icon-green"></i>
+          <h3 class="panel-title">
+            Completed Batches (<span id="completedBatchesCount">0</span>)
+          </h3>
+          <span class="panel-hint">· dyeing process fully done · click to open tracker</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="batches-grid" id="completedBatchesGrid">
+          <!-- JS will inject batch cards here -->
+        </div>
+        <div class="empty-state" id="completedBatchesEmpty" hidden>
+          <i data-lucide="award" class="empty-icon"></i>
+          <p>No completed batches yet</p>
+          <p class="empty-sub">Batches will appear here once dyeing is complete</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Rejected Batches (placeholder)
+       ========================================== -->
+  <section>
+    <div class="panel panel-red">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="x-circle" class="icon-red"></i>
+          <h3 class="panel-title">Rejected Batches</h3>
+          <span class="count-badge" id="rejectedBatchesCount">0</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="batches-grid" id="rejectedBatchesGrid">
+          <!-- JS will inject batch cards here -->
+        </div>
+        <div class="empty-state" id="rejectedBatchesEmpty" hidden>
+          <i data-lucide="x-circle" class="empty-icon"></i>
+          <p>No rejected batches</p>
+          <p class="empty-sub">Rejected batches will appear here automatically</p>
+        </div>
+        <div class="panel-footer-center">
+          <button class="btn btn-outline btn-red" data-action="view-alerts">
+            <i data-lucide="x-circle"></i>
+            View All in Alerts
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       Recent Orders + Machine Status
+       ========================================== -->
+  <section class="charts-grid">
+    <!-- Recent Orders — REAL DATA -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="alert-circle" class="icon-red"></i>
+          <h3 class="panel-title">
+            Recent Orders (Emergency, Delayed & Pending)
+          </h3>
+          <span class="panel-count-badge">{{ recent_orders|length }}</span>
+        </div>
+        <a href="{% url 'dpms_app:orders' %}" class="btn btn-outline btn-sm">
+          View All
+          <i data-lucide="arrow-right"></i>
+        </a>
+      </div>
+      <div class="panel-body">
+        <div class="list-stack" id="recentOrdersList">
+          {% for order in recent_orders %}
+          <div class="list-item {% if order.status == 'Emergency' %}list-item-emergency{% endif %}">
+            <div class="list-item-info">
+              <p class="list-item-title">
+                <span class="order-id">{{ order.order_id }}</span>
+                {{ order.customer_name }}
+              </p>
+              <p class="list-item-sub">{{ order.yarn_count }} • {{ order.color }}</p>
+            </div>
+            <div class="list-item-meta">
+              <p class="list-item-value">{{ order.order_qty }} kg</p>
+              <span class="status-chip status-{{ order.status|slugify }}">
+                {{ order.status }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <i data-lucide="inbox" class="empty-icon"></i>
+            <p>No pending or emergency orders</p>
+            <p class="empty-sub">All orders are on track</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Machine Status (placeholder) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i data-lucide="cpu" class="icon-indigo"></i>
+          <h3 class="panel-title">Machine Status</h3>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="list-stack" id="machineStatusList">
+          <div class="empty-state">
+            <i data-lucide="cpu" class="empty-icon"></i>
+            <p>No machine data</p>
+            <p class="empty-sub">Machines will appear here once added</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ==========================================
+     Pass Django data to JavaScript
+     ========================================== -->
+{{ status_data|json_script:"status-data" }}
+{{ orders_json|json_script:"orders-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

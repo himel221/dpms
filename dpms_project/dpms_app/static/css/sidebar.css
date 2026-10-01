@@ -1,0 +1,229 @@
+/* ==========================================
+   Sidebar — Yarn & Dyeing System
+   ========================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================
+   Sidebar — FIXED layout
+   ========================================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 16rem;
+  background: #0f172a;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  overflow: hidden;
+}
+
+/* ==========================================
+   Header
+   ========================================== */
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sidebar-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+}
+
+/* ==========================================
+   Nav
+   ========================================== */
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.sidebar-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ==========================================
+   Sidebar Item (link)
+   ========================================== */
+.sidebar-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 200ms ease, color 200ms ease;
+  font-family: inherit;
+
+  /* 👇 Link styles reset */
+  text-decoration: none !important;
+  outline: none;
+}
+
+/* Hover */
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  text-decoration: none !important;
+}
+
+/* Active */
+.sidebar-item.active {
+  background: #1e40af;
+  color: #ffffff;
+  text-decoration: none !important;
+}
+
+/* Focus */
+.sidebar-item:focus,
+.sidebar-item:focus-visible {
+  outline: none;
+  text-decoration: none !important;
+}
+
+/* Visited */
+.sidebar-item:visited {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none !important;
+}
+
+/* Icon */
+.sidebar-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+/* Label */
+.sidebar-label {
+  flex: 1;
+  text-align: left;
+}
+
+/* ==========================================
+   Badge (rejection count on Alerts)
+   ========================================== */
+.sidebar-badge {
+  display: none;
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.375rem;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  align-items: center;
+  justify-content: center;
+  animation: badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.sidebar-badge.show {
+  display: inline-flex;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ==========================================
+   Footer
+   ========================================== */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-footer p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sidebar-footer p + p {
+  margin-top: 0.25rem;
+}
+
+/* ==========================================
+   Main content area
+   ========================================== */
+.main-content {
+  margin-left: 16rem;
+  min-height: 100vh;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+/* ==========================================
+   Mobile
+   ========================================== */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+/* ==========================================
+   ULTIMATE OVERRIDE — Sidebar link underline
+   ========================================== */
+.sidebar .sidebar-item,
+.sidebar .sidebar-item:link,
+.sidebar .sidebar-item:visited,
+.sidebar .sidebar-item:hover,
+.sidebar .sidebar-item:focus,
+.sidebar .sidebar-item:active,
+.sidebar .sidebar-item.active {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
