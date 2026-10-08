@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Batch Process Tracker — Yarn & Dyeing{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/tracker.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="tracker-page">
+
+  {% if batch %}
+
+  <!-- ===== Batch Tracker ===== -->
+  <div class="batch-section">
+    <div class="batch-header">
+      <i data-lucide="package"></i>
+      <h3>Batch Manufacturing Process Tracker</h3>
+      <span class="badge-purple">Track batches through all manufacturing stages</span>
+    </div>
+    <div class="batch-list" id="batchList"></div>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <p>No batches found. Please create orders and allocate machines first.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ===== Rejection Modal ===== -->
+<div class="modal-overlay hidden" id="rejectionModal">
+  <div class="modal-box">
+    <div class="modal-header-row">
+      <div class="modal-icon red"><i data-lucide="x-circle"></i></div>
+      <div>
+        <div class="title">Reject Batch — Quality Check Failed</div>
+        <div class="sub" id="rejectionBatchName">—</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Rejection Reason <span class="req">*</span></label>
+      <textarea id="rejectionReasonInput" placeholder="Describe why this batch failed quality check..."></textarea>
+    </div>
+    <div class="realloc-box">
+      <div class="title"><i data-lucide="refresh-cw"></i> Machine Re-Allocation Options</div>
+      <label class="realloc-option selected" id="reallocAutoOption" onclick="selectReallocMode('auto')">
+        <input type="radio" name="realloc" value="auto" checked>
+        <div>
+          <div class="opt-title">Automatic Re-Allocation</div>
+          <div class="opt-desc">System will automatically find and allocate the best available machine</div>
+        </div>
+      </label>
+      <label class="realloc-option" id="reallocManualOption" onclick="selectReallocMode('manual')">
+        <input type="radio" name="realloc" value="manual">
+        <div>
+          <div class="opt-title">Manual Re-Allocation</div>
+          <div class="opt-desc">You will manually select a machine from the Plan Generator</div>
+        </div>
+      </label>
+    </div>
+    <div class="info-note">
+      <i data-lucide="alert-triangle"></i>
+      <div><strong>Note:</strong> This batch will be returned to Dyeing step.</div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeRejectionModal()">Cancel</button>
+      <button class="danger" onclick="confirmRejection()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Delivery Issue Modal ===== -->
+<div class="modal-overlay hidden" id="deliveryModal">
+  <div class="modal-box">
+    <div class="modal-header-row">
+      <div class="modal-icon orange"><i data-lucide="alert-triangle"></i></div>
+      <div>
+        <div class="title">Report Delivery Issue</div>
+        <div class="sub" id="deliveryBatchName">—</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Issue Description <span class="req">*</span></label>
+      <textarea id="deliveryIssueInput" placeholder="Describe the delivery problem..."></textarea>
+    </div>
+    <div class="info-note orange">
+      <i data-lucide="alert-triangle"></i>
+      <div><strong>Note:</strong> Batch will be returned to Store (Final).</div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeDeliveryModal()">Cancel</button>
+      <button class="warning" onclick="confirmDeliveryIssue()">Report Issue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Data ===== -->
+{{ batch|json_script:"batch-data" }}
+{{ all_batches|json_script:"all-batches-data" }}
+{{ all_steps|json_script:"all-steps-data" }}
+{{ step_comments|json_script:"step-comments-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/tracker.js' %}"></script>
+{% endblock %}

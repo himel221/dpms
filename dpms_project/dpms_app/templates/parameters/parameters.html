@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/parameters.css' %}" />
+
+<div class="param-page">
+
+  <!-- ===== Page Header ===== -->
+  <div class="param-header">
+    <div>
+      <h1 class="param-title">Parameters</h1>
+      <p class="param-subtitle">Manage system-wide parameters &amp; folders</p>
+    </div>
+    <button class="btn-primary" id="btnNewFolder">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      New Folder
+    </button>
+  </div>
+
+  <!-- ===== Layout ===== -->
+  <div class="param-layout">
+    <aside class="param-folders">
+      <h3 class="param-section-title">Folders</h3>
+      <ul class="folder-list" id="folderList">
+        {% if folders %}
+          {% for f in folders %}
+            <li class="folder-item {% if active_folder and active_folder.id == f.id %}active{% endif %}"
+                data-folder-id="{{ f.id }}"
+                data-folder-name="{{ f.name|escape }}"
+                data-folder-desc="{{ f.description|default:''|escape }}">
+              <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"></path>
+              </svg>
+              <span class="folder-name">{{ f.name }}</span>
+              <span class="folder-count">{{ f.parameters.count }}</span>
+              <button class="folder-menu-btn" title="Folder options">⋯</button>
+            </li>
+          {% endfor %}
+        {% else %}
+          <li class="folder-empty">
+            No folders yet.<br>Click <b>New Folder</b> to create one.
+          </li>
+        {% endif %}
+      </ul>
+    </aside>
+
+    <section class="param-detail">
+      <div class="detail-header">
+        <div>
+          <h2 id="folderTitle">
+            {% if active_folder %}{{ active_folder.name }}{% else %}No folder selected{% endif %}
+          </h2>
+          <p id="folderDesc" class="detail-desc">
+            {% if active_folder %}{{ active_folder.description|default:'' }}{% endif %}
+          </p>
+        </div>
+        {% if active_folder %}
+          <button class="btn-primary" id="btnNewParam"
+                  data-folder-id="{{ active_folder.id }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New Parameter
+          </button>
+        {% endif %}
+      </div>
+
+      <div class="table-wrap">
+        <table class="param-table">
+          <thead>
+            <tr>
+              <th>Parameter Name</th>
+              <th>Key</th>
+              <th>Value</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th width="120">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="paramTbody">
+            {% if parameters %}
+              {% for p in parameters %}
+                <tr data-param-id="{{ p.id }}">
+                  <td>{{ p.name }}</td>
+                  <td><code>{{ p.key }}</code></td>
+                  <td>{{ p.value|default:'—' }}</td>
+                  <td><span class="badge badge-{{ p.param_type }}">{{ p.get_param_type_display }}</span></td>
+                  <td>
+                    {% if p.is_active %}
+                      <span class="badge badge-active">Active</span>
+                    {% else %}
+                      <span class="badge badge-inactive">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button class="btn-icon js-edit-param" title="Edit" data-param-id="{{ p.id }}">✏️</button>
+                    <button class="btn-icon danger js-delete-param" title="Delete" data-param-id="{{ p.id }}">🗑️</button>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="6" class="empty-row">
+                  {% if active_folder %}
+                    No parameters yet. Click <b>New Parameter</b> to add one.
+                  {% else %}
+                    Select a folder from the left, or create a new one.
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- ============== FOLDER MODAL (compact) =============== -->
+<!-- ===================================================== -->
+<div class="modal-overlay" id="folderModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3 id="folderModalTitle">New Folder</h3>
+      <button type="button" class="btn-close" data-close-folder>✕</button>
+    </div>
+
+    <form id="folderForm" class="modal-body">
+      <input type="hidden" id="folderEditId" />
+
+      <div class="form-group">
+        <label for="folderName">Name *</label>
+        <input type="text" id="folderName" required maxlength="100"
+               placeholder="e.g. Name" />
+      </div>
+
+      <div class="form-group">
+        <label for="folderDescription">Description</label>
+        <input type="text" id="folderDescription" maxlength="300"
+               placeholder="Optional" />
+      </div>
+
+      <div class="form-group">
+        <label for="folderOrder">Display Order</label>
+        <input type="number" id="folderOrder" value="0" />
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close-folder>Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- ============ PARAMETER MODAL (compact) ============== -->
+<!-- ===================================================== -->
+<div class="modal-overlay" id="paramModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="paramModalTitle">New Parameter</h3>
+      <button type="button" class="btn-close" data-close-param>✕</button>
+    </div>
+
+    <form id="paramForm" class="modal-body">
+      <input type="hidden" id="paramEditId" />
+      <input type="hidden" id="paramFolderId" />
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="paramName">Name *</label>
+          <input type="text" id="paramName" required maxlength="100"
+                 placeholder="e.g. Parameter Name" />
+        </div>
+        <div class="form-group">
+          <label for="paramKey">Key <small>(optional)</small></label>
+          <input type="text" id="paramKey" maxlength="100"
+                 placeholder="e.g. yarn_count" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="paramValue">Value <small>(optional)</small></label>
+          <input type="text" id="paramValue" maxlength="300"
+                 placeholder="e.g. 40s" />
+        </div>
+        <div class="form-group">
+          <label for="paramType">Type</label>
+          <select id="paramType">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="select">Select</option>
+            <option value="boolean">Boolean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="paramOrder">Order <small>(optional)</small></label>
+          <input type="number" id="paramOrder" value="0" />
+        </div>
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="paramActive" checked />
+            Active
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close-param>Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CSRF + URL helpers -->
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.API_URLS = {
+    folderCreate: "{% url 'dpms_app:folder_create' %}",
+    folderUpdate: "{% url 'dpms_app:folder_update' 0 %}",
+    folderDelete: "{% url 'dpms_app:folder_delete' 0 %}",
+    paramCreate:  "{% url 'dpms_app:parameter_create' %}",
+    paramUpdate:  "{% url 'dpms_app:parameter_update' 0 %}",
+    paramDelete:  "{% url 'dpms_app:parameter_delete' 0 %}",
+  };
+</script>
+<script src="{% static 'js/parameters.js' %}"></script>
+{% endblock %}

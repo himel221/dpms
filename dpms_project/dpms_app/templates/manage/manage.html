@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/manage.css' %}" />
+
+<div class="manage-page">
+
+  <!-- ===== Page Header ===== -->
+  <div class="manage-header">
+    <div>
+      <h1 class="manage-title">Manage</h1>
+      <p class="manage-subtitle">Steps, initial time &amp; break time settings</p>
+    </div>
+    <button class="btn-primary" id="btnNewStep">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      New Step
+    </button>
+  </div>
+
+  <!-- ===== Steps Card ===== -->
+  <section class="manage-card">
+    <div class="card-header">
+      <div>
+        <h2>Steps</h2>
+        <p class="card-subtitle">{{ steps_count }} step{{ steps_count|pluralize }}</p>
+      </div>
+    </div>
+
+    <!-- ===== Step timeline ===== -->
+    <div class="step-timeline">
+      {% if steps %}
+        {% for s in steps %}
+          <div class="step-row" data-step-id="{{ s.id }}">
+
+            <!-- Step number badge -->
+            <div class="step-num">{{ s.display_order }}</div>
+
+            <!-- Step info -->
+            <div class="step-info">
+              <div class="step-name">{{ s.name }}</div>
+              <div class="step-meta">
+                <span class="meta-chip chip-time">
+                  ⏱ {{ s.initial_time }} h
+                </span>
+                {% if s.break_time and s.break_time > 0 %}
+                  <span class="meta-chip chip-break">
+                    ⏸ Break {{ s.break_time }} h
+                  </span>
+                {% endif %}
+                {% if s.is_active %}
+                  <span class="meta-chip chip-active">Active</span>
+                {% else %}
+                  <span class="meta-chip chip-inactive">Inactive</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="step-actions">
+              <button class="btn-icon js-edit-step" title="Edit"
+                      data-step-id="{{ s.id }}"
+                      data-name="{{ s.name|escape }}"
+                      data-initial-time="{{ s.initial_time }}"
+                      data-break-time="{{ s.break_time }}"
+                      data-display-order="{{ s.display_order }}"
+                      data-is-active="{{ s.is_active|yesno:'true,false' }}">✏️</button>
+              <button class="btn-icon danger js-delete-step" title="Delete"
+                      data-step-id="{{ s.id }}">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Break arrow between this and next step -->
+          {% if not forloop.last %}
+            <div class="step-arrow">
+              {% if s.break_time and s.break_time > 0 %}
+                <span class="arrow-label arrow-break">
+                  ↓ Break {{ s.break_time }} h
+                </span>
+              {% else %}
+                <span class="arrow-label arrow-none">
+                  ↓ no break
+                </span>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty-row">
+          No steps yet. Click <b>New Step</b> to add one.
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- ============== STEP MODAL ============================ -->
+<!-- ===================================================== -->
+<div class="modal-overlay" id="stepModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3 id="stepModalTitle">New Step</h3>
+      <button type="button" class="btn-close" data-close-step>✕</button>
+    </div>
+
+    <form id="stepForm" class="modal-body">
+      <input type="hidden" id="stepEditId" />
+
+      <div class="form-group">
+        <label for="stepName">Step Name *</label>
+        <input type="text" id="stepName" required maxlength="100"
+               placeholder="e.g. Soft winding" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="stepInitialTime">Initial Time (hours) *</label>
+          <input type="number" id="stepInitialTime" required
+                 min="0" step="0.1" value="4"
+                 placeholder="e.g. 4" />
+        </div>
+        <div class="form-group">
+          <label for="stepBreakTime">
+            Break Time (hours)
+            <small style="color:#94a3b8; font-weight:400;">after this step</small>
+          </label>
+          <input type="number" id="stepBreakTime"
+                 min="0" step="0.1" value="0"
+                 placeholder="e.g. 1" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="stepOrder">Step No.</label>
+          <input type="number" id="stepOrder" value="0" />
+        </div>
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="stepActive" checked />
+            Active
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close-step>Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CSRF + URL helpers -->
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.MANAGE_URLS = {
+    stepCreate: "{% url 'dpms_app:step_create' %}",
+    stepUpdate: "{% url 'dpms_app:step_update' 0 %}",
+    stepDelete: "{% url 'dpms_app:step_delete' 0 %}",
+  };
+</script>
+<script src="{% static 'js/manage.js' %}"></script>
+{% endblock %}

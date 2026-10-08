@@ -1,6 +1,17 @@
 from django.contrib import admin
-from .models import Order
+from .models import (
+    Order,
+    DyeingMachine,
+    ProductionPlan,
+    PlanStep,
+    BatchAllocation,
+    BatchAllocationDetail,
+)
 
+
+# ============================================================
+# Order Admin
+# ============================================================
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -38,10 +49,10 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
 
-#===========================================Machine admin==========================================#
-from django.contrib import admin
-from .models import Order, DyeingMachine
 
+# ============================================================
+# Machine Admin
+# ============================================================
 
 @admin.register(DyeingMachine)
 class DyeingMachineAdmin(admin.ModelAdmin):
@@ -74,3 +85,65 @@ class DyeingMachineAdmin(admin.ModelAdmin):
             'fields': ('knit_yarn_min', 'knit_yarn_max')
         }),
     )
+
+
+# ============================================================
+# Planning & Batch Admin
+# ============================================================
+
+@admin.register(ProductionPlan)
+class ProductionPlanAdmin(admin.ModelAdmin):
+    list_display = ('plan_id', 'name', 'plan_type', 'created_at')
+    list_filter = ('plan_type', 'created_at')
+    search_fields = ('plan_id', 'name')
+    readonly_fields = ('plan_id', 'created_at', 'updated_at')
+
+
+@admin.register(PlanStep)
+class PlanStepAdmin(admin.ModelAdmin):
+    list_display = (
+        'plan', 'order', 'step_name', 'machine',
+        'start_time', 'end_time', 'duration_hours', 'status',
+    )
+    list_filter = ('status', 'step_name', 'plan')
+    search_fields = ('plan__plan_id', 'order__order_id', 'step_name')
+
+
+@admin.register(BatchAllocation)
+class BatchAllocationAdmin(admin.ModelAdmin):
+    list_display = ('order', 'machine', 'is_allocated', 'allocated_at')
+    list_filter = ('is_allocated',)
+    search_fields = ('order__order_id', 'machine__machine_capacity')
+
+
+@admin.register(BatchAllocationDetail)
+class BatchAllocationDetailAdmin(admin.ModelAdmin):
+    list_display = (
+        'order', 'batch_id', 'machine',
+        'allocated_qty', 'batch_time_hours', 'status',
+    )
+    list_filter = ('status', 'machine')
+    search_fields = ('order__order_id', 'batch_id')
+    ordering = ('order', 'batch_id')
+
+from .models import BatchProcess, StepComment, Rejection
+
+
+@admin.register(BatchProcess)
+class BatchProcessAdmin(admin.ModelAdmin):
+    list_display = ('allocation', 'current_step', 'updated_at')
+    list_filter = ('current_step',)
+    search_fields = ('allocation__batch_id',)
+
+
+@admin.register(StepComment)
+class StepCommentAdmin(admin.ModelAdmin):
+    list_display = ('order', 'step_name', 'updated_at')
+    search_fields = ('order__order_id', 'step_name')
+
+
+@admin.register(Rejection)
+class RejectionAdmin(admin.ModelAdmin):
+    list_display = ('batch_process', 'step', 'timestamp')
+    list_filter = ('step',)
+    search_fields = ('batch_process__allocation__batch_id',)

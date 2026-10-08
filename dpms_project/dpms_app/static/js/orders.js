@@ -3,6 +3,8 @@
    Handles: Filters, Search, Modal, AJAX, Charts, Edit, Delete, Toasts
    + Stat card click → filter + scroll to table
    + Initial filter from URL → auto apply + scroll
+   + ✅ Row click → Order Detail page
+   + ✅ Edit form dropdown value set (dynamic)
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -107,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* =========================================
      State
      ========================================= */
-  let activeStatus = initialFilter || null;
+  let activeStatus = initialFilter || "all";
   let showFilters = false;
 
   const filters = {
@@ -174,12 +176,12 @@ document.addEventListener("DOMContentLoaded", function () {
       card.classList.toggle("active", card.dataset.filter === activeStatus);
     });
 
-    // ✅ Update table title dynamically
+    // Update table title dynamically
     if (ordersTableTitle) {
       ordersTableTitle.textContent =
         activeStatus && activeStatus !== "all"
           ? activeStatus + " Orders"
-          : "All Orders";
+            : "All Work Orders";
     }
   }
 
@@ -202,9 +204,20 @@ document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".summary-card").forEach(function (card) {
     card.addEventListener("click", function () {
       const f = card.dataset.filter;
-      activeStatus = activeStatus === f ? null : f;
-      applyFilters();
-      scrollToTable();       // ✅ Auto scroll to table
+      const params = new URLSearchParams(window.location.search);
+      params.delete("page");
+      if (f === "all") {
+        params.delete("filter");
+      } else {
+        params.set("filter", f);
+      }
+      const query = params.toString();
+      const nextUrl = window.location.pathname + (query ? "?" + query : "");
+      if (nextUrl === window.location.pathname + window.location.search) {
+        scrollToTable();
+      } else {
+        window.location.assign(nextUrl);
+      }
     });
   });
 
@@ -279,12 +292,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // ESC key → close modals
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeModal(newOrderModal);
+      closeModal(editOrderModal);
+      closeModal(deleteOrderModal);
+    }
+  });
+
+  /* =========================================
+     ✅ Select dropdown helper — value set koro
+     Jodi option na thake, dynamically add koro
+     ========================================= */
+  function setSelectValue(select, value) {
+    if (!select) return;
+    const val = value || "";
+
+    const exists = Array.from(select.options).some(function (opt) {
+      return opt.value === val;
+    });
+
+    if (!exists && val) {
+      const newOpt = new Option(val, val);
+      select.add(newOpt);
+    }
+
+    select.value = val;
+  }
+
   /* =========================================
      NEW ORDER
      ========================================= */
   if (openModalBtn) {
     openModalBtn.addEventListener("click", function () {
+      const form = document.getElementById("newOrderForm");
+      if (form) form.reset();
+
       openModal(newOrderModal);
+
       const dateInput = newOrderModal.querySelector('[name="orderDate"]');
       if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().split("T")[0];
@@ -368,18 +414,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function setVal(name, value) {
       const el = form.querySelector('[name="' + name + '"]');
-      if (el) el.value = value || "";
+      if (!el) return;
+      // If it's a SELECT — use helper to set value + dynamic option
+      if (el.tagName === "SELECT") {
+        setSelectValue(el, value);
+      } else {
+        el.value = value || "";
+      }
     }
 
     setVal("orderId",         d.id);
+
+    // ✅ Selects (Parameter-driven)
     setVal("customerName",    d.customer);
-    setVal("orderDate",       d.date);
     setVal("refNoBuyers",     d.refNo);
-    setVal("workOrderRemark", d.workOrder);
-    setVal("comments",        d.comments);
     setVal("yarnCount",       d.yarnCount);
     setVal("yarnCode",        d.yarnCode);
     setVal("color",           d.color);
+
+    // Inputs
+    setVal("orderDate",       d.date);
+    setVal("deliveryDate",    d.deliveryDate);
+    setVal("workOrderRemark", d.workOrder);
+    setVal("comments",        d.comments);
     setVal("orderQty",        d.qty);
     setVal("partyYarn",       d.partyYarn);
     setVal("storeYarn",       d.storeYarn);
@@ -392,6 +449,8 @@ document.addEventListener("DOMContentLoaded", function () {
     setVal("heldUpQty",       d.heldUp);
     setVal("deliveryReturn",  d.deliveryReturn);
     setVal("deliveryQty",     d.deliveryQty);
+
+    // Status is a select
     setVal("status",          d.status || "Pending");
 
     if (editOrderIdLabel) editOrderIdLabel.textContent = d.id || "";
@@ -525,15 +584,26 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* =========================================
-     Row actions (Edit / Delete)
+     ✅ ROW CLICK → Order Detail page
      ========================================= */
   getAllRows().forEach(function (row) {
+    row.style.cursor = "pointer";
     row.addEventListener("click", function (e) {
+      // Action buttons click → row click ignore koro
       if (e.target.closest(".row-actions")) return;
-      console.log("🖱️ Row clicked:", row.dataset.id);
+
+      const href = row.dataset.href;
+      if (href) {
+        window.location.href = href;
+      } else {
+        console.log("🖱️ Row clicked (no href):", row.dataset.id);
+      }
     });
   });
 
+  /* =========================================
+     Row actions (Edit / Delete)
+     ========================================= */
   document.querySelectorAll('[data-action="edit"]').forEach(function (btn) {
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -563,23 +633,15 @@ document.addEventListener("DOMContentLoaded", function () {
      Charts
      ========================================= */
   function getStatusData() {
-    const statuses = ["Inactive", "Pending", "In Progress", "Completed", "Delayed", "Emergency"];
-    const colors = {
-      Inactive: "#64748b", Pending: "#eab308", "In Progress": "#a855f7",
-      Completed: "#10b981", Delayed: "#ef4444", Emergency: "#f97316",
-    };
-    const rows = getAllRows();
-    return statuses.map(function (s) {
-      const matching = rows.filter(function (r) { return r.dataset.status === s; });
+    const dataElement = document.getElementById("orderStatusData");
+    if (!dataElement) return [];
+    return JSON.parse(dataElement.textContent).map(function (item) {
       return {
-        name: s,
-        value: matching.reduce(function (sum, r) {
-          return sum + (parseFloat(r.dataset.qty) || 0);
-        }, 0),
-        count: matching.length,
-        color: colors[s],
+        name: item.name,
+        value: item.count,
+        color: item.color,
       };
-    }).filter(function (d) { return d.value > 0; });
+    });
   }
 
   function drawCharts() {
@@ -588,7 +650,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const pieCtx = document.getElementById("orderPieChart");
     if (pieCtx) {
-      new Chart(pieCtx, {
+      const pieChart = new Chart(pieCtx, {
         type: "pie",
         data: {
           labels: data.map(function (d) { return d.name; }),
@@ -607,10 +669,14 @@ document.addEventListener("DOMContentLoaded", function () {
             tooltip: {
               callbacks: {
                 label: function (ctx) {
-                  return ctx.label + ": " + ctx.parsed.toLocaleString() + " kg";
+                  return ctx.label + ": " + ctx.parsed.toLocaleString() + " orders";
                 },
               },
             },
+          },
+          onClick: function (event, elements) {
+            if (!elements.length) return;
+            setStatusFilter(pieChart.data.labels[elements[0].index]);
           },
         },
       });
@@ -619,18 +685,28 @@ document.addEventListener("DOMContentLoaded", function () {
     const legend = document.getElementById("orderPieLegend");
     if (legend) {
       legend.innerHTML = data.map(function (d) {
-        return '<div class="chart-legend-item" data-legend="' + d.name + '">' +
+        return '<button type="button" class="chart-legend-item" data-legend="' + d.name + '">' +
           '<span class="chart-legend-dot" style="background:' + d.color + '"></span>' +
-          "<span>" + d.name + " (" + d.value.toLocaleString() + " kg)</span></div>";
+          "<span>" + d.name + " (" + d.value.toLocaleString() + " orders)</span></button>";
       }).join("");
 
       legend.querySelectorAll(".chart-legend-item").forEach(function (el) {
         el.addEventListener("click", function () {
-          activeStatus = el.dataset.legend;
-          applyFilters();
-          scrollToTable();
+          setStatusFilter(el.dataset.legend);
         });
       });
+    }
+
+    function setStatusFilter(status) {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("page");
+      params.set("filter", status);
+      const nextUrl = window.location.pathname + "?" + params.toString();
+      if (nextUrl === window.location.pathname + window.location.search) {
+        scrollToTable();
+      } else {
+        window.location.assign(nextUrl);
+      }
     }
 
     const barCtx = document.getElementById("orderBarChart");
@@ -679,7 +755,7 @@ document.addEventListener("DOMContentLoaded", function () {
   applyFilters();
   drawCharts();
 
-  // ✅ Auto-scroll to table if filter is applied from dashboard
+  // Auto-scroll to table if filter is applied from dashboard
   if (initialFilter && initialFilter !== "all") {
     console.log("📌 Initial filter applied:", initialFilter);
     scrollToTable();

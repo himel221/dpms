@@ -131,9 +131,24 @@
         <div class="form-group">
           <label>Company *</label>
           <select name="company" class="form-input" required>
-            <option value="EAL" selected>EAL</option>
-            <option value="Others">Others</option>
+            {% if company_params %}
+              {% for cp in company_params %}
+                <option value="{{ cp.name }}"
+                        {% if cp.name == company %}selected{% endif %}>
+                  {{ cp.name }}
+                </option>
+              {% endfor %}
+            {% else %}
+              <option value="EAL" selected>EAL</option>
+              <option value="Others">Others</option>
+            {% endif %}
           </select>
+          {% if not company_params %}
+            <p class="form-hint" style="color:#b45309;">
+              Parameter-এ "Company" folder-এ কোনো company add করা নেই।
+              Default EAL/Others দেখানো হচ্ছে।
+            </p>
+          {% endif %}
         </div>
 
         <div class="form-group">
@@ -210,8 +225,14 @@
         <div class="form-group">
           <label>Company *</label>
           <select name="company" class="form-input" required>
-            <option value="EAL">EAL</option>
-            <option value="Others">Others</option>
+            {% if company_params %}
+              {% for cp in company_params %}
+                <option value="{{ cp.name }}">{{ cp.name }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="EAL">EAL</option>
+              <option value="Others">Others</option>
+            {% endif %}
           </select>
         </div>
 

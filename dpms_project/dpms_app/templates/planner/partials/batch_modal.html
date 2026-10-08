@@ -1,0 +1,135 @@
+<!-- ==========================================
+     Batch Allocation Modal
+     ========================================== -->
+<div class="modal-overlay" id="batchModalOverlay" style="display:none;">
+  <div class="modal-container">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div>
+        <h2>Machine Allocation for Order <span id="bmHeaderOrderId">—</span></h2>
+        <div class="subtitle">
+          <span><i data-lucide="user"></i> Customer: <strong id="bmHeaderCustomer">—</strong></span>
+          <span><i data-lucide="weight"></i> Qty: <strong id="bmHeaderQty">—</strong></span>
+          <span><i data-lucide="tag"></i> Yarn: <strong id="bmHeaderYarn">—</strong></span>
+        </div>
+      </div>
+      <button class="btn-close" id="bmCloseBtn" title="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="mode-selector">
+      <button class="mode-btn active" id="bmModeAutoBtn" data-mode="auto">
+        <i data-lucide="line-chart"></i> Auto Suggestions
+      </button>
+      <button class="mode-btn" id="bmModeManualBtn" data-mode="manual">
+        <i data-lucide="settings"></i> Manual Allocation
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+
+      <!-- ========== AUTO MODE ========== -->
+      <div id="bmAutoModeContent">
+        <div class="banner-best" id="bmBestMatchBanner">
+          <div class="icon-circle">
+            <i data-lucide="check-circle"></i>
+          </div>
+          <div style="flex:1;">
+            <h3 id="bmBestMatchTitle">Loading...</h3>
+            <p class="reasoning" id="bmBestMatchReasoning"></p>
+            <div class="pros-cons">
+              <div class="pros">
+                <h4><i data-lucide="check" style="color:#22c55e;"></i> Advantages</h4>
+                <ul id="bmBestMatchPros"></ul>
+              </div>
+              <div class="cons">
+                <h4><i data-lucide="alert-triangle" style="color:#f59e0b;"></i> Consider</h4>
+                <ul id="bmBestMatchCons"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-card">
+          <h4>
+            <i data-lucide="calendar"></i>
+            Batch Schedule — <span id="bmScheduleComboId">—</span>
+            <span class="queued-badge hidden" id="bmScheduleQueuedBadge">⏳ Adjusted for existing bookings</span>
+          </h4>
+          <div style="overflow-x:auto;">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>Batch</th>
+                  <th>Machine</th>
+                  <th>Qty (kg)</th>
+                  <th>Duration</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="bmScheduleBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="bmCombinationsList"></div>
+      </div>
+
+      <!-- ========== MANUAL MODE ========== -->
+      <div id="bmManualModeContent" class="hidden">
+        <div class="booking-panel">
+          <div class="header">
+            <i data-lucide="calendar-check" style="color:#2563eb;"></i>
+            <h4>Machine Booking Status</h4>
+            <span class="note">— existing bookings from other orders</span>
+          </div>
+          <div class="booking-grid" id="bmBookingGrid"></div>
+        </div>
+
+        <div class="qty-summary" id="bmQtySummary">
+          <div class="block">
+            <div class="label">Total Allocated</div>
+            <div class="value" id="bmManualTotalQty">0.0 kg</div>
+          </div>
+          <div class="block">
+            <div class="label">Remaining</div>
+            <div class="value amber" id="bmManualRemainingQty">0.0 kg</div>
+          </div>
+          <button class="btn btn-primary" id="bmAddBatchBtn">
+            <i data-lucide="plus"></i> Add Batch
+          </button>
+        </div>
+
+        <div id="bmManualBatchesList"></div>
+
+        <div class="card hidden" id="bmNoManualBatchesCard">
+          <div class="card-content" style="text-align:center; padding:2rem;">
+            <p class="text-muted">No batches added yet. Click "Add Batch" to start.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <div class="warning-inline hidden" id="bmManualWarning">
+        <i data-lucide="alert-circle"></i>
+        <span id="bmManualWarningText"></span>
+      </div>
+      <div class="footer-buttons">
+        <button class="btn btn-outline" id="bmCancelBtn">Cancel</button>
+        <button class="btn btn-green" id="bmSaveBtn">
+          <i data-lucide="save"></i> Save Allocation
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

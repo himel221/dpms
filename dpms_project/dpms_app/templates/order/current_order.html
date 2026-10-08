@@ -1,0 +1,611 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Current Order{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/current_order.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="co-page"
+     id="coPage"
+     {% if order %}
+     data-order-id="{{ order.order_id }}"
+     data-qty-update-url="{% url 'dpms_app:order_update_qty' order.order_id %}"
+     data-status-update-url="{% url 'dpms_app:current_order_update_status' order.order_id %}"
+     data-step-update-url-template="{% url 'dpms_app:order_step_update' order.order_id 0 %}"
+     data-current-step="{{ order.current_step|default:''|escape }}"
+     {% endif %}
+     data-csrf="{{ csrf_token }}"
+>
+
+  {% if not order %}
+  <!-- ===== Empty state ===== -->
+  <div class="co-empty">
+    <i data-lucide="inbox" class="co-empty-icon"></i>
+    <h2>No Orders Found</h2>
+    <p>Create a new order from the Work Order page.</p>
+    <a href="{% url 'dpms_app:orders' %}" class="btn btn-primary">
+      <i data-lucide="arrow-left"></i> Go to Work Order
+    </a>
+  </div>
+
+  {% else %}
+
+  <!-- ===== Master-Detail Layout ===== -->
+  <div class="co-layout">
+
+    <!-- ============ LEFT: Order list ============ -->
+    <aside class="co-list-panel">
+      <div class="co-list-header">
+        <div>
+          <h2>All Orders</h2>
+          <p class="co-list-count">
+            {{ paginator.count }} order{{ paginator.count|pluralize }}
+            · page {{ page_obj.number }}/{{ paginator.num_pages }}
+          </p>
+        </div>
+      </div>
+
+      <ul class="co-list" id="coOrderList">
+        {% for o in page_obj %}
+          <li>
+            <a
+              href="{% url 'dpms_app:current_order_detail' o.order_id %}"
+              class="co-list-item {% if o.order_id == order.order_id %}active{% endif %}"
+              data-order-id="{{ o.order_id }}"
+            >
+              <div class="co-list-top">
+                <span class="co-list-id">{{ o.order_id }}</span>
+                <span class="status-chip status-{{ o.status|slugify }}">{{ o.status }}</span>
+              </div>
+              <div class="co-list-bottom">
+                <span class="co-list-customer">{{ o.customer_name }}</span>
+                <span class="co-list-qty">{{ o.order_qty|floatformat:0 }} kg</span>
+              </div>
+              <div class="co-list-meta">
+                <span>{{ o.yarn_count }}</span>
+                <span>•</span>
+                <span>{{ o.color }}</span>
+              </div>
+            </a>
+          </li>
+        {% empty %}
+          <li class="co-list-empty">No orders found</li>
+        {% endfor %}
+      </ul>
+
+      <!-- ===== Pagination ===== -->
+      {% if paginator.num_pages > 1 %}
+      <div class="co-list-pagination">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="co-page-btn">‹ Prev</a>
+        {% else %}
+          <span class="co-page-btn disabled">‹ Prev</span>
+        {% endif %}
+
+        <span class="co-page-info">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="co-page-btn">Next ›</a>
+        {% else %}
+          <span class="co-page-btn disabled">Next ›</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </aside>
+
+    <!-- ============ RIGHT: Detail ============ -->
+    <main class="co-detail-panel">
+
+      <!-- ===== Header ===== -->
+      <div class="co-header">
+        <div>
+          <h1 class="co-title">
+            Order <span class="co-id">{{ order.order_id }}</span>
+          </h1>
+          <p class="co-subtitle">{{ order.customer_name }} — {{ order.color }}</p>
+        </div>
+        <div class="co-header-right">
+          <div class="status-edit">
+            <label>Status</label>
+            <select id="statusSelect" class="status-select">
+              <option value="Inactive" {% if order.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+              <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+              <option value="In Progress" {% if order.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+              <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+              <option value="Delayed" {% if order.status == 'Delayed' %}selected{% endif %}>Delayed</option>
+              <option value="Emergency" {% if order.status == 'Emergency' %}selected{% endif %}>Emergency</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Order Information ===== -->
+      <div class="co-panel">
+        <div class="co-panel-header">
+          <h2>Order Information</h2>
+        </div>
+        <div class="co-info-list">
+          <div class="co-info-row">
+            <span class="co-info-label">Customer</span>
+            <span class="co-info-value">{{ order.customer_name }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Order Date</span>
+            <span class="co-info-value">{{ order.order_date|date:'d M Y' }}</span>
+          </div>
+          <div class="co-info-row is-delivery">
+            <span class="co-info-label">Delivery Date</span>
+            <span class="co-info-value">{{ order.delivery_date|date:'d M Y'|default:'—' }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Ref No &amp; Buyers</span>
+            <span class="co-info-value">{{ order.ref_no_buyers|default:'—' }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Work Order Remark</span>
+            <span class="co-info-value">{{ order.work_order_remark|default:'—' }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Yarn Count</span>
+            <span class="co-info-value">{{ order.yarn_count }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Yarn Code</span>
+            <span class="co-info-value">{{ order.yarn_code }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Color</span>
+            <span class="co-info-value">{{ order.color }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Approval</span>
+            <span class="co-info-value">{{ order.approval|upper }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Priority</span>
+            <span class="co-info-value">{{ order.priority }}</span>
+          </div>
+          <div class="co-info-row">
+            <span class="co-info-label">Comments</span>
+            <span class="co-info-value">{{ order.comments|default:'—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== KPI Cards ===== -->
+      <div class="co-cards-grid">
+
+        <div class="co-kpi co-kpi-order">
+          <div class="co-kpi-icon"><i data-lucide="package"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Order Qty</p>
+            <p class="co-kpi-value" id="kpiOrderQty">{{ order.order_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <div class="co-kpi co-kpi-dyeing">
+          <div class="co-kpi-icon"><i data-lucide="droplet"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Dyeing Qty</p>
+            <p class="co-kpi-value" id="kpiDyeingQty">{{ order.dyeing_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <div class="co-kpi co-kpi-finish">
+          <div class="co-kpi-icon"><i data-lucide="sparkles"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Finish Qty</p>
+            <p class="co-kpi-value" id="kpiFinishQty">{{ order.finish_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <div class="co-kpi co-kpi-delivery">
+          <div class="co-kpi-icon"><i data-lucide="truck"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Delivery Qty</p>
+            <p class="co-kpi-value" id="kpiDeliveryQty">{{ order.delivery_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <div class="co-kpi co-kpi-heldup">
+          <div class="co-kpi-icon"><i data-lucide="pause-circle"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Held Up</p>
+            <p class="co-kpi-value" id="kpiHeldUp">{{ order.held_up_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <div class="co-kpi co-kpi-reject">
+          <div class="co-kpi-icon"><i data-lucide="x-octagon"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Reject Qty</p>
+            <p class="co-kpi-value" id="kpiRejectQty">{{ order.reject_qty|floatformat:2 }}</p>
+            <p class="co-kpi-unit">kg</p>
+          </div>
+        </div>
+
+        <!-- ✅ Current Step card -->
+        <div class="co-kpi co-kpi-step">
+          <div class="co-kpi-icon"><i data-lucide="git-branch"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Current Step</p>
+            <p class="co-kpi-value co-kpi-value-text" id="kpiCurrentStep">
+              {{ display_current_step|default:'—' }}
+            </p>
+            <p class="co-kpi-unit">stage</p>
+          </div>
+        </div>
+
+        <button type="button" class="co-kpi co-kpi-batches" id="openBatchesCardBtn"
+                aria-haspopup="dialog" aria-controls="allBatchesModal"
+                {% if not batch_progress.count %}disabled{% endif %}>
+          <div class="co-kpi-icon"><i data-lucide="boxes"></i></div>
+          <div class="co-kpi-body">
+            <p class="co-kpi-label">Batches</p>
+            <p class="co-kpi-value">{{ batch_progress.count }}</p>
+            <p class="co-kpi-unit">{{ batch_progress.percent }}% complete · view batches</p>
+          </div>
+        </button>
+
+      </div>
+
+      <section class="co-panel" id="orderBatchesPanel">
+        <div class="co-panel-header">
+          <div>
+            <h2>Batches</h2>
+            <p class="co-hint">
+              {{ batch_progress.percent }}% of batch process steps completed
+            </p>
+          </div>
+          <div class="co-batch-header-actions">
+            <button type="button" class="co-batches-link" id="viewAllBatchesBtn">
+              View all batches
+            </button>
+            <a class="co-batches-link" href="{% url 'dpms_app:batches' %}">Open batch tracker</a>
+          </div>
+        </div>
+        {% if batch_progress.count %}
+          <progress class="co-batch-progress-track" value="{{ batch_progress.percent }}"
+                    max="100" aria-label="Batch process completion">
+            {{ batch_progress.percent }}%
+          </progress>
+          <div class="co-batch-pagination" aria-label="Batch navigation">
+            <button type="button" class="co-batch-page-btn" id="previousBatchBtn">
+              Previous batch
+            </button>
+            <span id="currentBatchPage" aria-live="polite">Batch 1 of {{ batch_progress.count }}</span>
+            <button type="button" class="co-batch-page-btn" id="nextBatchBtn">
+              Next batch
+            </button>
+          </div>
+          <div class="co-batch-list">
+            {% for batch in batch_progress.batches %}
+              <article class="co-batch-card" data-batch-index="{{ forloop.counter0 }}"
+                       role="button" tabindex="0"
+                       aria-label="Open details for batch {{ batch.id }}"
+                       {% if not forloop.first %}hidden{% endif %}>
+                <div class="co-batch-card-header">
+                  <div>
+                    <h3>{{ batch.id }}</h3>
+                    <p>{{ batch.machine }} · {{ batch.quantity|floatformat:2 }} kg</p>
+                  </div>
+                  <div class="co-batch-state">
+                    <span class="co-batch-current-step">{{ batch.current_step }}</span>
+                    <strong>{{ batch.percent }}%</strong>
+                  </div>
+                </div>
+                <div class="co-batch-steps">
+                  {% for step in batch.steps %}
+                    <div class="co-batch-step {% if step.is_completed %}is-done{% elif step.is_current %}is-current{% endif %}">
+                      <span>{{ step.name }}</span>
+                      {% if step.is_completed %}
+                        <small>Complete</small>
+                      {% elif step.is_current %}
+                        <small>In Progress</small>
+                      {% else %}
+                        <small>Pending</small>
+                      {% endif %}
+                      {% if step.completed_at %}
+                        <small>Completed {{ step.completed_at|date:'d M Y, h:i A' }}</small>
+                      {% endif %}
+                      {% if step.comment %}
+                        <p class="co-batch-step-comment">{{ step.comment }}</p>
+                      {% endif %}
+                      {% for rejection in step.rejections %}
+                        <p class="co-batch-step-rejection">
+                          Rejected {{ rejection.timestamp|date:'d M Y, h:i A' }}:
+                          {{ rejection.reason }}
+                        </p>
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="co-empty-text">No batches have been allocated to this order yet.</p>
+        {% endif %}
+      </section>
+
+      {% if batch_progress.count %}
+        <div class="co-batch-modal" id="allBatchesModal" hidden>
+          <section class="co-batch-modal-dialog" role="dialog" aria-modal="true"
+                   aria-labelledby="allBatchesTitle">
+            <header class="co-batch-modal-header">
+              <div>
+                <h2 id="allBatchesTitle">All batches</h2>
+                <p class="co-hint">Select a batch to view its complete process details.</p>
+              </div>
+              <button type="button" class="co-batch-page-btn" id="backToBatchListBtn" hidden>
+                Back to all batches
+              </button>
+              <button type="button" class="co-batch-modal-close" id="closeAllBatchesBtn"
+                      aria-label="Close all batches">×</button>
+            </header>
+            <div class="co-batch-modal-list" id="allBatchesList">
+              {% for batch in batch_progress.batches %}
+                <button type="button" class="co-batch-modal-item"
+                        data-batch-index="{{ forloop.counter0 }}">
+                  <span>
+                    <strong>{{ batch.id }}</strong>
+                    <small>{{ batch.machine }} · {{ batch.quantity|floatformat:2 }} kg</small>
+                  </span>
+                  <span class="co-batch-modal-status">
+                    {{ batch.current_step }} · {{ batch.percent }}%
+                  </span>
+                </button>
+              {% endfor %}
+            </div>
+            <div class="co-batch-modal-details" id="batchModalDetails"
+                 aria-live="polite"></div>
+            <footer class="co-batch-modal-footer">
+              <button type="button" class="co-batch-page-btn" id="previousBatchListPageBtn">
+                Previous
+              </button>
+              <span id="batchListPage" aria-live="polite">Page 1</span>
+              <button type="button" class="co-batch-page-btn" id="nextBatchListPageBtn">
+                Next
+              </button>
+            </footer>
+          </section>
+        </div>
+      {% endif %}
+
+      <!-- ===== Chart + Summary ===== -->
+      <div class="co-dual-grid">
+        <div class="co-panel co-chart-panel">
+          <div class="co-panel-header">
+            <h2>Quantity Flow</h2>
+            <p class="co-hint">Order → Dyeing → Finish → Delivery</p>
+          </div>
+          <div class="co-chart-wrap">
+            <canvas id="qtyFlowChart"></canvas>
+          </div>
+        </div>
+
+        <div class="co-panel">
+          <div class="co-panel-header">
+            <h2>Quantity Breakdown</h2>
+            <p class="co-hint">Live values</p>
+          </div>
+
+          <ul class="co-summary-list">
+            <li>
+              <span class="co-sum-dot" style="background:#3b82f6;"></span>
+              <span class="co-sum-label">Order Qty</span>
+              <span class="co-sum-value" id="sumOrderQty">{{ order.order_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#6366f1;"></span>
+              <span class="co-sum-label">Dyeing Qty</span>
+              <span class="co-sum-value" id="sumDyeingQty">{{ order.dyeing_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#a855f7;"></span>
+              <span class="co-sum-label">Dyed Bal Qty</span>
+              <span class="co-sum-value" id="sumDyedBal">{{ order.dyed_bal_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#10b981;"></span>
+              <span class="co-sum-label">Finish Qty</span>
+              <span class="co-sum-value" id="sumFinishQty">{{ order.finish_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#f59e0b;"></span>
+              <span class="co-sum-label">Del Qty</span>
+              <span class="co-sum-value" id="sumDelQty">{{ order.del_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#94a3b8;"></span>
+              <span class="co-sum-label">Held Up Qty</span>
+              <span class="co-sum-value" id="sumHeldUp">{{ order.held_up_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#ef4444;"></span>
+              <span class="co-sum-label">Reject Qty</span>
+              <span class="co-sum-value" id="sumRejectQty">{{ order.reject_qty|floatformat:2 }} kg</span>
+            </li>
+            <li>
+              <span class="co-sum-dot" style="background:#0ea5e9;"></span>
+              <span class="co-sum-label">Delivery Qty</span>
+              <span class="co-sum-value" id="sumDeliveryQty">{{ order.delivery_qty|floatformat:2 }} kg</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           ✅ Step Tracker — click to mark done (auto date-time)
+           ============================================================ -->
+      <div class="co-panel">
+        <div class="co-panel-header">
+          <h2>Step Tracker</h2>
+          <p class="co-hint">
+            Click to mark steps manually. Batch progress also updates steps automatically.
+            {% if batch_progress.count %}Batch completion: {{ batch_progress.percent }}%.{% endif %}
+          </p>
+        </div>
+
+        <div class="co-step-tracker-list">
+          {% for row in step_rows %}
+            {% with s=row.step t=row.tracker %}
+            <div class="step-tracker-row {% if row.done %}is-done{% endif %} {% if display_current_step == s.name %}is-active{% endif %} {% if row.auto_done and not t.end_time %}is-auto{% endif %}"
+                 data-step-id="{{ s.id }}">
+
+              <!-- Clickable step chip -->
+              <button type="button"
+                      class="step-chip {% if row.done %}is-done{% endif %}"
+                      data-step-id="{{ s.id }}"
+                      data-step-name="{{ s.name }}"
+                      data-done="{{ row.done|yesno:'true,false' }}"
+                      title="Click to mark done">
+                <span class="step-num">{{ s.display_order }}</span>
+                <span class="step-name">{{ s.name }}</span>
+                <span class="step-time">{{ s.initial_time }}h</span>
+                {% if row.done %}
+                  <span class="step-check">✓</span>
+                {% endif %}
+              </button>
+
+              <!-- Done date/time badge -->
+              <span class="step-done-badge {% if not row.done %}is-empty{% endif %}">
+                {% if t.end_time %}
+                  {{ t.end_time|date:'d M Y, h:i A' }}
+                {% elif row.auto_done %}
+                  Completed via batch progress
+                {% else %}
+                  Not done yet
+                {% endif %}
+              </span>
+
+              <!-- Small comment field -->
+              <input type="text"
+                     class="step-comment-input"
+                     data-step-id="{{ s.id }}"
+                     placeholder="Comment (optional)..."
+                     value="{{ t.comment|default:'' }}" />
+
+              <!-- Save comment button -->
+              <button type="button"
+                      class="step-comment-save"
+                      data-step-id="{{ s.id }}"
+                      title="Save comment">
+                <i data-lucide="save"></i>
+              </button>
+
+              <!-- Undo button (only if done) -->
+              {% if t.end_time %}
+              <button type="button"
+                      class="step-undo-btn"
+                      data-step-id="{{ s.id }}"
+                      title="Undo (mark undone)">
+                <i data-lucide="rotate-ccw"></i>
+              </button>
+              {% endif %}
+            </div>
+            {% endwith %}
+          {% empty %}
+            <p class="co-empty-text">
+              Manage page e kono step nei. Please add steps in
+              <a href="{% url 'dpms_app:manage' %}">Manage</a>.
+            </p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ===== Quantity Update ===== -->
+      <div class="co-panel">
+        <div class="co-panel-header">
+          <h2>Quantity Update</h2>
+          <p class="co-hint">
+            Input fields: Dyeing Qty, Reject Qty, Del Qty, Delivery Return.
+            Baki value auto calculate hobe.
+          </p>
+        </div>
+
+        <form id="qtyForm" class="co-qty-grid">
+          <input type="hidden" id="orderId" value="{{ order.order_id }}" />
+
+          <div class="co-field co-input">
+            <label for="qtyOrderQty">Order Qty (kg) *</label>
+            <input type="number" step="any" id="qtyOrderQty" value="{{ order.order_qty }}" />
+          </div>
+
+          <div class="co-field co-input">
+            <label for="qtyDyeingQty">Dyeing Qty (kg) *</label>
+            <input type="number" step="any" id="qtyDyeingQty" value="{{ order.dyeing_qty }}" />
+          </div>
+
+          <div class="co-field co-input">
+            <label for="qtyRejectQty">Reject Qty (kg) *</label>
+            <input type="number" step="any" id="qtyRejectQty" value="{{ order.reject_qty }}" />
+          </div>
+
+          <div class="co-field co-auto">
+            <label>Dyed Bal Qty (kg)</label>
+            <div class="auto-value" id="qtyDyedBalQty">{{ order.dyed_bal_qty|floatformat:2 }}</div>
+            <p class="formula">= (Order Qty − Dyeing Qty) + Reject Qty</p>
+          </div>
+
+          <div class="co-field co-auto">
+            <label>Finish Qty (kg)</label>
+            <div class="auto-value" id="qtyFinishQty">{{ order.finish_qty|floatformat:2 }}</div>
+            <p class="formula">= Dyeing Qty − Reject Qty</p>
+          </div>
+
+          <div class="co-field co-input">
+            <label for="qtyDelQty">Del Qty (kg) *</label>
+            <input type="number" step="any" id="qtyDelQty" value="{{ order.del_qty }}" />
+          </div>
+
+          <div class="co-field co-auto">
+            <label>Held Up Qty (kg)</label>
+            <div class="auto-value" id="qtyHeldUpQty">{{ order.held_up_qty|floatformat:2 }}</div>
+            <p class="formula">= Finish Qty − Del Qty</p>
+          </div>
+
+          <div class="co-field co-input">
+            <label for="qtyDeliveryReturn">Delivery Return (kg) *</label>
+            <input type="number" step="any" id="qtyDeliveryReturn" value="{{ order.delivery_return }}" />
+          </div>
+
+          <div class="co-field co-auto">
+            <label>Delivery Qty (kg)</label>
+            <div class="auto-value" id="qtyDeliveryQty">{{ order.delivery_qty|floatformat:2 }}</div>
+            <p class="formula">= Del Qty − Delivery Return</p>
+          </div>
+        </form>
+
+        <div class="co-actions">
+          <button class="btn btn-outline" id="resetQtyBtn" type="button">
+            <i data-lucide="rotate-ccw"></i> Reset
+          </button>
+          <button class="btn btn-primary" id="saveQtyBtn" type="button">
+            <i data-lucide="save"></i> Save Quantities
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/current_order.js' %}"></script>
+{% endblock %}

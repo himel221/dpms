@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Batches — Yarn & Dyeing System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/batches.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="batches-page">
+
+  <!-- ===== HEADER ===== -->
+  <div class="batches-header">
+    <div>
+      <h2 class="batches-title">Batches</h2>
+      <p class="batches-subtitle" id="headerSummary">— Batches · 0 kg Total · 0/0 machines in use</p>
+      <div class="filter-pills-wrap">
+        <button class="filter-pill active" id="allocatedFilterBtn" onclick="toggleAllocatedFilter()">
+          <i data-lucide="cpu"></i>
+          <span id="allocatedFilterText">Allocated machines only</span>
+        </button>
+      </div>
+    </div>
+    <div class="view-toggle">
+      <button id="viewScheduleBtn" onclick="switchView('schedule')">
+        <i data-lucide="list"></i> Machine Schedule
+      </button>
+      <button class="active" id="viewGanttBtn" onclick="switchView('gantt')">
+        <i data-lucide="layout-grid"></i> Calendar View
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== STAT CARDS ===== -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- ===== GANTT VIEW ===== -->
+  <div id="ganttView">
+    <div class="date-filter-bar">
+      <i data-lucide="calendar" class="text-muted"></i>
+      <span class="text-sm" style="font-weight:500;">Date Range</span>
+      <div class="date-inputs-wrap">
+        <label class="text-xs text-muted">From</label>
+        <input type="date" id="filterFromInput">
+        <span class="text-muted">→</span>
+        <label class="text-xs text-muted">To</label>
+        <input type="date" id="filterToInput">
+      </div>
+      <button class="date-btn primary" onclick="setThisWeek()">This week</button>
+      <button class="date-btn" onclick="setAllBatches()">All batches</button>
+      <span class="text-xs text-muted" id="daysShownLabel">0 days shown</span>
+    </div>
+
+    <div class="gantt-wrapper">
+      <div class="gantt-scroll">
+        <table class="gantt-table" id="ganttTable">
+          <thead id="ganttHead"></thead>
+          <tbody id="ganttBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="unscheduled-box hidden" id="unscheduledBox">
+      <p class="unscheduled-label">Unscheduled — no start date assigned</p>
+      <div class="unscheduled-list" id="unscheduledList"></div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch purple"></span> Running</div>
+      <div class="legend-item"><span class="legend-swatch green"></span> Completed</div>
+      <div class="legend-item"><span class="legend-swatch yellow"></span> Waiting for Dyeing</div>
+      <div class="legend-item"><span class="legend-swatch red"></span> Rejected Reallocated</div>
+      <span class="legend-hint">Drag to reschedule · Click to view tracker</span>
+    </div>
+  </div>
+
+  <!-- ===== SCHEDULE VIEW ===== -->
+  <div id="scheduleView" class="hidden">
+    <div class="schedule-layout">
+      <aside class="schedule-sidebar">
+        <div class="sb-header">
+          <p class="sb-title">Machines</p>
+          <p class="sb-sub" id="machinesInUseLabel">0 in use</p>
+        </div>
+        <ul class="machine-list" id="machineList"></ul>
+      </aside>
+      <div class="schedule-main" id="scheduleMain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== Data ===== -->
+{{ machines_json|json_script:"machines-data" }}
+{{ batches_json|json_script:"batches-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/batches.js' %}"></script>
+{% endblock %}

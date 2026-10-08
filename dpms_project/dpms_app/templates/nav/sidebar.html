@@ -29,7 +29,7 @@
         </a>
       </li>
 
-      <!-- Orders -->
+      <!-- Work Order (renamed from Orders) -->
       <li>
         <a
           href="{% url 'dpms_app:orders' %}"
@@ -41,7 +41,22 @@
             <circle cx="19" cy="21" r="1"></circle>
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
           </svg>
-          <span class="sidebar-label">Orders</span>
+          <span class="sidebar-label">Work Order</span>
+        </a>
+      </li>
+
+      <!-- ✅ NEW: Current Order -->
+      <li>
+        <a
+          href="{% url 'dpms_app:current_order' %}"
+          class="sidebar-item {% if active_view == 'current_order' %}active{% endif %}"
+          data-view="current_order"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="sidebar-label">Current Order</span>
         </a>
       </li>
 
@@ -64,7 +79,7 @@
       <!-- Auto Planner -->
       <li>
         <a
-          href="#"
+          href="{% url 'dpms_app:planner' %}"
           class="sidebar-item {% if active_view == 'plan' %}active{% endif %}"
           data-view="plan"
         >
@@ -96,7 +111,7 @@
       <!-- Batches -->
       <li>
         <a
-          href="#"
+          href="{% url 'dpms_app:batches' %}"
           class="sidebar-item {% if active_view == 'batches' %}active{% endif %}"
           data-view="batches"
         >
@@ -106,6 +121,46 @@
             <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path>
           </svg>
           <span class="sidebar-label">Batches</span>
+        </a>
+      </li>
+
+      <!-- Parameter -->
+      <li>
+        <a
+          href="{% url 'dpms_app:parameters' %}"
+          class="sidebar-item {% if active_view == 'parameters' %}active{% endif %}"
+          data-view="parameters"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span class="sidebar-label">Parameter</span>
+        </a>
+      </li>
+
+      <!-- Manage -->
+      <li>
+        <a
+          href="{% url 'dpms_app:manage' %}"
+          class="sidebar-item {% if active_view == 'manage' %}active{% endif %}"
+          data-view="manage"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l3 3-3 3-3-3 3-3z"></path>
+            <path d="M2 12l3-3 3 3-3 3-3-3z"></path>
+            <path d="M22 12l-3-3-3 3 3 3 3-3z"></path>
+            <path d="M12 22l3-3-3-3-3 3 3 3z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span class="sidebar-label">Manage</span>
         </a>
       </li>
 

@@ -1,6 +1,7 @@
 /* ============================================================
    Dyeing Machine Details Page — JavaScript
    Add + Edit + Delete with AJAX + Toast
+   ✅ Dynamic Company dropdown (Parameter theke)
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -117,6 +118,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // ESC key → close all modals
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeModal(addMachineModal);
+      closeModal(editMachineModal);
+      closeModal(deleteMachineModal);
+    }
+  });
+
   /* =========================================
      Toast helper
      ========================================= */
@@ -125,10 +135,45 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* =========================================
+     ✅ Dynamic Company select helper
+     --------------------------------------------------------------
+     Jodi option-এ company value na thake (Parameter theke remove hoye
+     geche kintu machine-এ company roye geche), tahole dynamically
+     option add kore select koro.
+     ========================================= */
+  function setSelectValue(select, value) {
+    if (!select) return;
+    const val = value || "";
+
+    // Check if option already exists
+    const exists = Array.from(select.options).some(function (opt) {
+      return opt.value === val;
+    });
+
+    if (!exists && val) {
+      // ✅ Dynamically add option
+      const newOpt = new Option(val, val);
+      select.add(newOpt);
+    }
+
+    select.value = val;
+  }
+
+  /* =========================================
      ADD MACHINE
      ========================================= */
   if (openModalBtn && addMachineModal) {
     openModalBtn.addEventListener("click", function () {
+      // ✅ Reset form on open
+      const form = document.getElementById("addMachineForm");
+      if (form) {
+        form.reset();
+        // Default select first company option
+        const companySelect = form.querySelector('[name="company"]');
+        if (companySelect && companySelect.options.length > 0) {
+          companySelect.selectedIndex = 0;
+        }
+      }
       openModal(addMachineModal);
     });
   }
@@ -213,7 +258,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     setVal("machineId",       d.id);
-    setVal("company",         d.company);
+
+    // ✅ Company — dynamic set (option na thakle add hobe)
+    const companySelect = form.querySelector('[name="company"]');
+    setSelectValue(companySelect, d.company);
+
     setVal("machineCapacity", d.capacity);
     setVal("cone",            d.cone);
     setVal("knitSweaterMin",  d.sweaterMin);

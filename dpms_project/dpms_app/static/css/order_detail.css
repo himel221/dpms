@@ -1,0 +1,195 @@
+/* ================= Order Detail Page ================= */
+.order-detail-page {
+  padding: 24px 28px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.od-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0ea5e9;
+  font-size: 13px;
+  text-decoration: none;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.back-link:hover { color: #0284c7; }
+
+.od-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.od-id {
+  color: #0ea5e9;
+  font-family: monospace;
+}
+.od-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 6px 0 0;
+}
+.od-status { padding-top: 30px; }
+
+/* ---- Card ---- */
+.od-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 18px;
+}
+
+.od-card-header {
+  margin-bottom: 16px;
+}
+
+.od-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.od-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ---- Info grid ---- */
+.od-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.od-info-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.od-info-grid span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: .04em;
+}
+.od-info-grid b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* ---- Qty grid ---- */
+.od-qty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.od-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.od-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.od-input input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  transition: border-color .15s, box-shadow .15s;
+}
+.od-input input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, .15);
+}
+
+.od-auto .auto-value {
+  padding: 9px 12px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0369a1;
+  font-family: monospace;
+}
+
+.formula {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 2px 0 0;
+  font-style: italic;
+}
+
+/* ---- Actions ---- */
+.od-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+.btn-primary { background: #0ea5e9; color: #fff; }
+.btn-primary:hover { background: #0284c7; }
+.btn-outline {
+  background: #fff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.btn-outline:hover { background: #f1f5f9; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ---- Status chip (reuse) ---- */
+.status-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.status-pending      { background: #fef3c7; color: #92400e; }
+.status-inactive     { background: #f1f5f9; color: #475569; }
+.status-in-progress  { background: #ede9fe; color: #6d28d9; }
+.status-completed    { background: #dcfce7; color: #166534; }
+.status-delayed      { background: #fee2e2; color: #991b1b; }
+.status-emergency    { background: #fed7aa; color: #9a3412; }

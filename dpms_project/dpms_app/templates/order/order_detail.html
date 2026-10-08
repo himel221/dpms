@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order {{ order.order_id }} — Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/order_detail.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="order-detail-page">
+
+  <!-- ===== Header ===== -->
+  <div class="od-header">
+    <div>
+      <a href="{% url 'dpms_app:orders' %}" class="back-link">
+        <i data-lucide="arrow-left"></i> Back to Orders
+      </a>
+      <h1 class="od-title">
+        Order <span class="od-id">{{ order.order_id }}</span>
+      </h1>
+      <p class="od-subtitle">{{ order.customer_name }} — {{ order.color }}</p>
+    </div>
+    <div class="od-status">
+      <span class="status-chip status-{{ order.status|slugify }}">{{ order.status }}</span>
+    </div>
+  </div>
+
+  <!-- ===== Info Card ===== -->
+  <div class="od-card">
+    <h2 class="od-card-title">Order Information</h2>
+    <div class="od-info-grid">
+      <div><span>Customer</span><b>{{ order.customer_name }}</b></div>
+      <div><span>Order Date</span><b>{{ order.order_date|date:'d M Y' }}</b></div>
+      <div><span>Delivery Date</span><b>{{ order.delivery_date|date:'d M Y'|default:'—' }}</b></div>
+      <div><span>Ref No &amp; Buyers</span><b>{{ order.ref_no_buyers|default:'—' }}</b></div>
+      <div><span>Work Order Remark</span><b>{{ order.work_order_remark|default:'—' }}</b></div>
+      <div><span>Yarn Count</span><b>{{ order.yarn_count }}</b></div>
+      <div><span>Yarn Code</span><b>{{ order.yarn_code }}</b></div>
+      <div><span>Color</span><b>{{ order.color }}</b></div>
+      <div><span>Approval</span><b>{{ order.approval|upper }}</b></div>
+      <div><span>Priority</span><b>{{ order.priority }}</b></div>
+      <div><span>Comments</span><b>{{ order.comments|default:'—' }}</b></div>
+    </div>
+  </div>
+
+  <!-- ===== Qty Update Card ===== -->
+  <div class="od-card">
+    <div class="od-card-header">
+      <h2 class="od-card-title">Quantity Update</h2>
+      <p class="od-hint">
+        Input fields: Dyeing Qty, Reject Qty, Del Qty, Delivery Return.
+        Baki value auto calculate hobe.
+      </p>
+    </div>
+
+    <form id="qtyForm" class="od-qty-grid">
+      {% csrf_token %}
+      <input type="hidden" id="orderId" value="{{ order.order_id }}" />
+
+      <!-- Order Qty (editable) -->
+      <div class="od-field od-input">
+        <label for="qtyOrderQty">Order Qty (kg) *</label>
+        <input type="number" step="any" id="qtyOrderQty" name="orderQty"
+               value="{{ order.order_qty }}" />
+      </div>
+
+      <!-- Dyeing Qty (input) -->
+      <div class="od-field od-input">
+        <label for="qtyDyeingQty">Dyeing Qty (kg) *</label>
+        <input type="number" step="any" id="qtyDyeingQty" name="dyeingQty"
+               value="{{ order.dyeing_qty }}" />
+      </div>
+
+      <!-- Reject Qty (input) -->
+      <div class="od-field od-input">
+        <label for="qtyRejectQty">Reject Qty (kg) *</label>
+        <input type="number" step="any" id="qtyRejectQty" name="rejectQty"
+               value="{{ order.reject_qty }}" />
+      </div>
+
+      <!-- Dyed Bal Qty (auto) -->
+      <div class="od-field od-auto">
+        <label>Dyed Bal Qty (kg)</label>
+        <div class="auto-value" id="qtyDyedBalQty">{{ order.dyed_bal_qty|floatformat:2 }}</div>
+        <p class="formula">= (Order Qty − Dyeing Qty) + Reject Qty</p>
+      </div>
+
+      <!-- Finish Qty (auto) -->
+      <div class="od-field od-auto">
+        <label>Finish Qty (kg)</label>
+        <div class="auto-value" id="qtyFinishQty">{{ order.finish_qty|floatformat:2 }}</div>
+        <p class="formula">= Dyeing Qty − Reject Qty</p>
+      </div>
+
+      <!-- Del Qty (input) -->
+      <div class="od-field od-input">
+        <label for="qtyDelQty">Del Qty (kg) *</label>
+        <input type="number" step="any" id="qtyDelQty" name="delQty"
+               value="{{ order.del_qty }}" />
+      </div>
+
+      <!-- Held Up Qty (auto) -->
+      <div class="od-field od-auto">
+        <label>Held Up Qty (kg)</label>
+        <div class="auto-value" id="qtyHeldUpQty">{{ order.held_up_qty|floatformat:2 }}</div>
+        <p class="formula">= Finish Qty − Del Qty</p>
+      </div>
+
+      <!-- Delivery Return (input) -->
+      <div class="od-field od-input">
+        <label for="qtyDeliveryReturn">Delivery Return (kg) *</label>
+        <input type="number" step="any" id="qtyDeliveryReturn" name="deliveryReturn"
+               value="{{ order.delivery_return }}" />
+      </div>
+
+      <!-- Delivery Qty (auto) -->
+      <div class="od-field od-auto">
+        <label>Delivery Qty (kg)</label>
+        <div class="auto-value" id="qtyDeliveryQty">{{ order.delivery_qty|floatformat:2 }}</div>
+        <p class="formula">= Del Qty − Delivery Return</p>
+      </div>
+
+    </form>
+
+    <div class="od-actions">
+      <button class="btn btn-primary" id="saveQtyBtn">
+        <i data-lucide="save"></i> Save Quantities
+      </button>
+      <button class="btn btn-outline" id="resetQtyBtn">
+        <i data-lucide="rotate-ccw"></i> Reset
+      </button>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.ORDER_ID = "{{ order.order_id }}";
+  window.QTY_UPDATE_URL = "{% url 'dpms_app:order_update_qty' order.order_id %}";
+</script>
+<script src="{% static 'js/order_detail.js' %}"></script>
+{% endblock %}
